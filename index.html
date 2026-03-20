@@ -93,7 +93,9 @@ button.edit-active { background: #FAEEDA; border-color: #EF9F27; color: #854F0B;
   background: var(--bg2); color: var(--text2); transition: all 0.12s; user-select: none;
 }
 .tab.active { background: var(--bg); color: var(--text); border-color: #666; font-weight: 500; }
-.tab-dot { width: 6px; height: 6px; border-radius: 50%; background: #1D9E75; }
+.tab-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.tab-dot.partial { background: transparent; border: 1.5px solid #1D9E75; }
+.tab-dot.full    { background: #1D9E75; border: 1.5px solid #1D9E75; }
 .tab-remove {
   font-size: 11px; color: #bbb; cursor: pointer; margin-left: 2px;
   padding: 2px 4px; border-radius: 4px; transition: background 0.1s; user-select: none;
@@ -279,6 +281,22 @@ textarea:focus { border-color: #888; }
 .student-note { font-size:12px; color:var(--text2); font-style:italic; margin-top:4px; line-height:1.4; }
 .student-not-scored { font-size:12px; color:var(--text3); flex-shrink:0; }
 
+/* Keyboard navigation focus */
+.crit-row.kb-focus { outline: 2px solid #378ADD; outline-offset: -2px; }
+
+/* Drag & drop reordering */
+.drag-over-crit { outline:2px dashed #378ADD !important; outline-offset:-2px; background:#E6F1FB !important; border-radius:var(--r-sm); }
+.drag-over-sub  { outline:2px dashed #378ADD !important; outline-offset:-2px; background:#E6F1FB !important; }
+.reorder-btns { display:flex; flex-direction:column; gap:1px; flex-shrink:0; margin-right:2px; }
+.reorder-btn {
+  width:18px; height:13px; border:0.5px solid var(--border2); border-radius:3px;
+  background:var(--bg); color:var(--text3); font-size:9px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; padding:0; line-height:1;
+}
+.reorder-btn:hover { background:var(--bg2); color:var(--text); }
+.drag-handle { cursor:grab; color:var(--text3); padding:0 4px; flex-shrink:0; user-select:none; font-size:13px; display:none; align-items:center; }
+@media (hover:hover) { .drag-handle { display:flex; } }
+
 /* PDF modal */
 .modal-backdrop {
   display: none; position: fixed; inset: 0;
@@ -420,7 +438,10 @@ textarea:focus { border-color: #888; }
   <aside class="sidebar">
     <div class="sidebar-head">
       <h2>Claudine Meter</h2>
-      <p>Adult education — Mathematics</p>
+      <p>Competenties evalueren - cvo Groeipunt</p>
+      <p id="last-synced-label" style="font-size:10px;color:var(--text3);margin-top:3px;display:none">
+        Last synced: <span id="last-synced-time">—</span>
+      </p>
     </div>
     <div class="sidebar-scroll" id="sidebar-list"></div>
     <div class="sidebar-footer">
@@ -440,7 +461,7 @@ textarea:focus { border-color: #888; }
           <option value="de-DE">Deutsch</option>
         </select>
       </div>
-      <button onclick="exportAccessCodes()">Export access codes</button>
+      <button onclick="exportAccessCodes()" id="btn-export-codes" style="opacity:1;transition:opacity 0.2s">Export access codes</button>
       <!-- Gear menu -->
       <div style="position:relative">
         <button onclick="toggleGearMenu(event)" style="width:100%;display:flex;align-items:center;gap:6px;justify-content:center">
@@ -525,6 +546,8 @@ textarea:focus { border-color: #888; }
       </span>
       <button id="btn-manage" onclick="openManageEntryModal()">Manage criteria</button>
       <button id="btn-sa-toggle" onclick="toggleSaColumn()" title="Show student self-assessment column">Self-assessment</button>
+      <button id="btn-lock" onclick="lockTeacher()" title="Lock — requires password to re-enter" style="padding:5px 8px">🔒</button>
+      <button onclick="openShortcutHelp()" title="Keyboard shortcuts" style="padding:5px 8px">?</button>
     </div>
 
   <!-- Manage criteria entry modal -->
@@ -533,16 +556,16 @@ textarea:focus { border-color: #888; }
       <h3 style="margin-bottom:6px">Manage criteria</h3>
       <p style="font-size:13px;color:var(--text2);margin-bottom:1.5rem;line-height:1.6">How would you like to set up the criteria for this class?</p>
       <div style="display:flex;flex-direction:column;gap:10px">
-        <button onclick="closeManageEntryModal();openImportCriteriaModal()" style="padding:12px;font-size:14px;border-radius:var(--r-md);text-align:left;display:flex;align-items:center;gap:10px">
+        <button onclick="_lastManageChoice='import';closeManageEntryModal();openImportCriteriaModal()" style="padding:12px;font-size:14px;border-radius:var(--r-md);text-align:left;display:flex;align-items:center;gap:10px">
           <span style="font-size:20px">📥</span>
           <span><strong style="display:block;font-size:14px">Import from another class</strong><span style="font-size:12px;color:var(--text3)">Copy criteria structure from an existing class code</span></span>
         </button>
-        <button onclick="closeManageEntryModal();enterManageMode()" style="padding:12px;font-size:14px;border-radius:var(--r-md);text-align:left;display:flex;align-items:center;gap:10px">
+        <button onclick="_lastManageChoice='manual';closeManageEntryModal();enterManageMode()" style="padding:12px;font-size:14px;border-radius:var(--r-md);text-align:left;display:flex;align-items:center;gap:10px">
           <span style="font-size:20px">✏️</span>
           <span><strong style="display:block;font-size:14px">Edit manually</strong><span style="font-size:12px;color:var(--text3)">Add, remove or rename criteria and subcriteria</span></span>
         </button>
       </div>
-      <button onclick="closeManageEntryModal()" class="modal-close" style="margin-top:1rem;width:100%">Cancel</button>
+      <button onclick="_lastManageChoice=null;closeManageEntryModal()" class="modal-close" style="margin-top:1rem;width:100%">Cancel</button>
     </div>
   </div>
 
@@ -613,6 +636,45 @@ textarea:focus { border-color: #888; }
     </div>
   </div>
 
+  <!-- Keyboard shortcuts help modal -->
+  <div class="modal-backdrop" id="shortcut-modal" onclick="if(event.target===this)closeShortcutHelp()">
+    <div class="modal" style="width:420px;max-width:95vw">
+      <h3 style="margin-bottom:1rem">Keyboard shortcuts</h3>
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:13px;align-items:center">
+        <kbd style="font-family:monospace;background:var(--bg2);border:0.5px solid var(--border2);border-radius:4px;padding:2px 7px;font-size:12px;white-space:nowrap">1 2 3 4</kbd>
+        <span style="color:var(--text2)">Set score for focused subcriterion (1=Not achieved … 4=Flying colours)</span>
+        <kbd style="font-family:monospace;background:var(--bg2);border:0.5px solid var(--border2);border-radius:4px;padding:2px 7px;font-size:12px">Tab</kbd>
+        <span style="color:var(--text2)">Move to next subcriterion</span>
+        <kbd style="font-family:monospace;background:var(--bg2);border:0.5px solid var(--border2);border-radius:4px;padding:2px 7px;font-size:12px;white-space:nowrap">Shift+Tab</kbd>
+        <span style="color:var(--text2)">Move to previous subcriterion</span>
+        <kbd style="font-family:monospace;background:var(--bg2);border:0.5px solid var(--border2);border-radius:4px;padding:2px 7px;font-size:12px;white-space:nowrap">← →</kbd>
+        <span style="color:var(--text2)">Switch between students</span>
+        <kbd style="font-family:monospace;background:var(--bg2);border:0.5px solid var(--border2);border-radius:4px;padding:2px 7px;font-size:12px;white-space:nowrap">↑ ↓</kbd>
+        <span style="color:var(--text2)">Move between criteria</span>
+        <kbd style="font-family:monospace;background:var(--bg2);border:0.5px solid var(--border2);border-radius:4px;padding:2px 7px;font-size:12px">?</kbd>
+        <span style="color:var(--text2)">Show / hide this help</span>
+        <kbd style="font-family:monospace;background:var(--bg2);border:0.5px solid var(--border2);border-radius:4px;padding:2px 7px;font-size:12px">Esc</kbd>
+        <span style="color:var(--text2)">Close any open modal</span>
+      </div>
+      <p style="font-size:11px;color:var(--text3);margin-top:1rem;line-height:1.5">Shortcuts are disabled when typing in a text field or note. The focused subcriterion is highlighted in blue.</p>
+      <button onclick="closeShortcutHelp()" class="modal-close" style="margin-top:1rem;width:100%">Close</button>
+    </div>
+  </div>
+
+  <!-- Unsaved changes warning modal -->
+  <div class="modal-backdrop" id="unsaved-modal">
+    <div class="modal" style="width:360px;max-width:95vw;text-align:center">
+      <div style="font-size:32px;margin-bottom:8px">⚠️</div>
+      <h3 style="margin-bottom:6px">Unsaved changes</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:1.5rem;line-height:1.6">You have changes that haven't been saved to the sheet yet. What would you like to do?</p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button onclick="unsavedSaveAndSwitch()" style="font-weight:500;padding:10px">Save now, then switch class</button>
+        <button onclick="unsavedSwitchAnyway()" style="padding:10px;color:#A32D2D;border-color:#F09595;background:#FCEBEB">Switch anyway — discard changes</button>
+        <button onclick="closeUnsavedModal()" class="modal-close" style="padding:10px">Cancel — stay here</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Class switcher modal -->
   <div class="modal-backdrop" id="class-modal" onclick="if(event.target===this)closeClassModal()">
     <div class="modal" style="width:380px;max-width:95vw">
@@ -625,6 +687,21 @@ textarea:focus { border-color: #888; }
       </div>
       <div id="switch-result" class="settings-result" style="margin-top:8px"></div>
       <button class="modal-close" style="margin-top:1rem;width:100%" onclick="closeClassModal()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Admin login modal -->
+  <div class="modal-backdrop" id="admin-login-modal" onclick="if(event.target===this)closeAdminLogin()">
+    <div class="modal" style="width:340px;max-width:95vw">
+      <h3 style="margin-bottom:4px">Admin access</h3>
+      <p style="margin-bottom:1.25rem;color:var(--text2);font-size:13px;line-height:1.6">Enter the admin password to continue.</p>
+      <div class="settings-label" style="margin-bottom:6px">Admin password</div>
+      <input class="settings-input" id="admin-login-pwd" type="password" placeholder="Admin password" onkeydown="if(event.key==='Enter')submitAdminLogin()" />
+      <div id="admin-login-result" class="settings-result" style="margin-top:8px"></div>
+      <div style="display:flex;gap:8px;margin-top:1rem">
+        <button onclick="submitAdminLogin()" style="flex:1;font-weight:500">Enter</button>
+        <button onclick="closeAdminLogin()" class="modal-close" style="flex:1">Cancel</button>
+      </div>
     </div>
   </div>
 
@@ -646,6 +723,18 @@ textarea:focus { border-color: #888; }
         <button onclick="testConnection()" style="flex:1">Test connection</button>
         <button onclick="saveAdminSettings()" style="flex:1;font-weight:500">Save</button>
         <button onclick="closeAdmin()" class="modal-close" style="flex:1">Close</button>
+      </div>
+      <div style="margin-top:1rem;border-top:0.5px solid var(--border);padding-top:1rem">
+        <div style="font-size:11px;font-weight:500;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em">Reset teacher password</div>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.5">Use this when a teacher has forgotten their password. Enter their class code and set a new password.</p>
+        <div class="settings-label" style="margin-bottom:4px">Class code</div>
+        <input class="settings-input" id="reset-pwd-class" type="text" placeholder="e.g. GELGERE02ALOLCRLHFlFl01SA" style="margin-bottom:8px" />
+        <div class="settings-label" style="margin-bottom:4px">New password</div>
+        <input class="settings-input" id="reset-pwd-new" type="password" placeholder="New password (min. 4 characters)" style="margin-bottom:8px" />
+        <div class="settings-label" style="margin-bottom:4px">Confirm new password</div>
+        <input class="settings-input" id="reset-pwd-confirm" type="password" placeholder="Repeat new password" style="margin-bottom:8px" onkeydown="if(event.key==='Enter')adminResetPassword()" />
+        <div id="reset-pwd-result" class="settings-result" style="margin-bottom:8px"></div>
+        <button onclick="adminResetPassword()" style="width:100%;font-weight:500">Reset password</button>
       </div>
       <div style="margin-top:1rem;border-top:0.5px solid var(--border);padding-top:1rem">
         <div style="font-size:11px;font-weight:500;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em">Debug — Student Index</div>
@@ -675,6 +764,7 @@ textarea:focus { border-color: #888; }
     <div class="edit-banner" id="manage-banner" style="background:#E6F1FB;border-color:#85B7EB;color:#185FA5">
       <strong>Manage criteria</strong> — add, remove or rename criteria and subcriteria. Weight inputs are now editable.
       <div style="flex:1"></div>
+      <button onclick="exitManageMode();openImportCriteriaModal()" style="font-size:12px;padding:4px 10px;background:transparent;border-color:#85B7EB;color:#185FA5;margin-right:4px">Import</button>
       <button onclick="exitManageMode()" style="font-size:12px;padding:4px 10px">Done</button>
     </div>
 
@@ -692,6 +782,14 @@ textarea:focus { border-color: #888; }
     </div>
 
     <div class="tabs" id="tabs"></div>
+    <div id="eval-legend" style="display:none;gap:10px;margin-bottom:6px;padding:0 2px">
+      <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text3)">
+        <span class="tab-dot full" style="display:inline-block"></span> All criteria evaluated
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text3)">
+        <span class="tab-dot partial" style="display:inline-block"></span> Partially evaluated
+      </div>
+    </div>
     <div id="panel"></div>
 
   </main>
@@ -730,7 +828,8 @@ const DOT_CLR = ["#E24B4A","#EF9F27","#1D9E75","#378ADD"];
 const BG_CLR  = ["#FCEBEB","#FAEEDA","#E1F5EE","#E6F1FB"];
 const BD_CLR  = ["#F09595","#FAC775","#5DCAA5","#85B7EB"];
 const TXT_CLR = ["#A32D2D","#854F0B","#0F6E56","#185FA5"];
-const KEY = "eval_tracker_v2";
+const KEY            = "eval_tracker_v2";
+const SESSION_AUTH_KEY = "claudine_authed"; // sessionStorage — clears on tab close
 
 /* ── State ── */
 let state = { students:[], scores:{}, notes:{}, critTitles:{}, subTexts:{}, subBlooms:{}, weights:{}, subNotes:{}, globalFeedback:{}, speechLang:"nl-BE", studentCodes:{}, teacherPwdHash:"", criteria:null, selfAssess:{}, gsConfig:{ url:"https://script.google.com/macros/s/AKfycbxZupVwHyK-qAxYjiEFfMBmwm7PyKNKPfQJEXJ4Qvrz_aGvqDu6qZ5Do1zfN-fPuQpjnQ/exec", key:"ClaudineMeter2026!", className:"" } };
@@ -759,6 +858,20 @@ function getCrit(ci)      { return getCriteria()[ci]; }
 function getCritTitle(ci) { return getCrit(ci)?.title || ""; }
 function getSubText(ci,si){ return getCrit(ci)?.subs[si]?.text  || ""; }
 function getSubBloom(ci,si){ return getCrit(ci)?.subs[si]?.bloom || ""; }
+
+/* ── Session auth ── */
+function isSessionAuthed()   { return sessionStorage.getItem(SESSION_AUTH_KEY) === "1"; }
+function setSessionAuthed()  { sessionStorage.setItem(SESSION_AUTH_KEY, "1"); }
+function clearSessionAuth()  { sessionStorage.removeItem(SESSION_AUTH_KEY); }
+
+function lockTeacher() {
+  if (!confirm("Lock Claudine Meter?\n\nYou'll need to enter your password again to get back in.")) return;
+  clearSessionAuth();
+  // Keep localStorage intact (data stays) but show wizard again
+  document.getElementById("student-overlay")?.classList.remove("open");
+  exitManageMode();
+  showRolePicker();
+}
 
 /* ── Persistence ── */
 function setStatus(s) {
@@ -875,6 +988,19 @@ function hasAnyScore(name,ci) {
 }
 function hasAnyCritScore(ci) { return state.students.some(s=>hasAnyScore(s,ci)); }
 
+// Returns 'none' | 'partial' | 'full'
+function getStudentEvalStatus(name) {
+  const criteria = getCriteria();
+  let evaluated = 0;
+  for (let ci = 0; ci < criteria.length; ci++) {
+    const wr = calcWeightedResult(name, ci);
+    if (wr && wr.levelIndex !== null) evaluated++;
+  }
+  if (evaluated === 0)               return "none";
+  if (evaluated === criteria.length) return "full";
+  return "partial";
+}
+
 /* ── Self-assessment column toggle ── */
 function toggleSaColumn() {
   showSaColumn = !showSaColumn;
@@ -901,8 +1027,287 @@ function getSaCell(name, ci, si) {
   </div>`;
 }
 
+/* ── Reorder criteria & subcriteria ── */
+
+// Generic array swap preserving all mapped data
+function _swapCritData(fromCi, toCi) {
+  // Swap in criteria array
+  const crit = getCriteria();
+  [crit[fromCi], crit[toCi]] = [crit[toCi], crit[fromCi]];
+
+  // Remap per-criterion data for all students
+  const remapForStudents = (obj) => {
+    state.students.forEach(name => {
+      if (!obj[name]) return;
+      const a = obj[name][fromCi], b = obj[name][toCi];
+      obj[name][fromCi] = b; obj[name][toCi] = a;
+    });
+  };
+  remapForStudents(state.scores);
+  remapForStudents(state.notes);
+  remapForStudents(state.subNotes);
+
+  // Remap weights
+  const wa = state.weights[fromCi], wb = state.weights[toCi];
+  state.weights[fromCi] = wb; state.weights[toCi] = wa;
+  if (!state.weights[fromCi]) delete state.weights[fromCi];
+  if (!state.weights[toCi])  delete state.weights[toCi];
+}
+
+function moveCriterion(ci, dir) {
+  const crit = getCriteria();
+  const to = ci + dir;
+  if (to < 0 || to >= crit.length) return;
+  _swapCritData(ci, to);
+  activeCrit = to; // follow the moved criterion
+  scheduleSave(); render();
+}
+
+function _swapSubData(ci, fromSi, toSi) {
+  const crit = getCriteria();
+  const subs = crit[ci].subs;
+  [subs[fromSi], subs[toSi]] = [subs[toSi], subs[fromSi]];
+
+  // Remap scores and subNotes for this criterion
+  state.students.forEach(name => {
+    const sc = state.scores[name]?.[ci];
+    if (sc) { [sc[fromSi], sc[toSi]] = [sc[toSi], sc[fromSi]]; }
+    const sn = state.subNotes[name]?.[ci];
+    if (sn) { [sn[fromSi], sn[toSi]] = [sn[toSi], sn[fromSi]]; }
+  });
+
+  // Remap weights
+  const w = state.weights[ci] || {};
+  const wa = w[fromSi], wb = w[toSi];
+  if (wa !== undefined) w[toSi] = wa; else delete w[toSi];
+  if (wb !== undefined) w[fromSi] = wb; else delete w[fromSi];
+}
+
+function moveSubcriterion(ci, si, dir) {
+  const crit = getCriteria();
+  const to = si + dir;
+  if (to < 0 || to >= crit[ci].subs.length) return;
+  _swapSubData(ci, si, to);
+  scheduleSave(); render();
+}
+
+/* ── Drag-and-drop — criteria sidebar ── */
+let _dragCi = null;
+
+function _initCritDrag() {
+  const items = document.querySelectorAll("#sidebar-list .sidebar-item[draggable='true']");
+  items.forEach(el => {
+    el.addEventListener("dragstart", e => {
+      _dragCi = parseInt(el.dataset.ci);
+      e.dataTransfer.effectAllowed = "move";
+      setTimeout(() => el.style.opacity = "0.4", 0);
+    });
+    el.addEventListener("dragend", e => {
+      el.style.opacity = "";
+      document.querySelectorAll(".drag-over-crit").forEach(x => x.classList.remove("drag-over-crit"));
+    });
+    el.addEventListener("dragover", e => {
+      e.preventDefault(); e.dataTransfer.dropEffect = "move";
+      el.classList.add("drag-over-crit");
+    });
+    el.addEventListener("dragleave", () => el.classList.remove("drag-over-crit"));
+    el.addEventListener("drop", e => {
+      e.preventDefault();
+      el.classList.remove("drag-over-crit");
+      const toCi = parseInt(el.dataset.ci);
+      if (_dragCi === null || _dragCi === toCi) return;
+      // Move _dragCi to toCi step by step
+      const crit = getCriteria();
+      const step = _dragCi < toCi ? 1 : -1;
+      let cur = _dragCi;
+      while (cur !== toCi) {
+        _swapCritData(cur, cur + step);
+        cur += step;
+      }
+      activeCrit = toCi;
+      _dragCi = null;
+      scheduleSave(); render();
+    });
+  });
+}
+
+/* ── Drag-and-drop — subcriteria rows ── */
+let _dragSi = null;
+let _dragSiCi = null;
+
+function _initSubDrag(ci) {
+  const rows = document.querySelectorAll(".crit-row[draggable='true']");
+  rows.forEach(el => {
+    el.addEventListener("dragstart", e => {
+      _dragSi = parseInt(el.dataset.si);
+      _dragSiCi = ci;
+      e.dataTransfer.effectAllowed = "move";
+      setTimeout(() => el.style.opacity = "0.4", 0);
+    });
+    el.addEventListener("dragend", () => {
+      el.style.opacity = "";
+      document.querySelectorAll(".drag-over-sub").forEach(x => x.classList.remove("drag-over-sub"));
+    });
+    el.addEventListener("dragover", e => {
+      e.preventDefault(); e.dataTransfer.dropEffect = "move";
+      el.classList.add("drag-over-sub");
+    });
+    el.addEventListener("dragleave", () => el.classList.remove("drag-over-sub"));
+    el.addEventListener("drop", e => {
+      e.preventDefault();
+      el.classList.remove("drag-over-sub");
+      const toSi = parseInt(el.dataset.si);
+      if (_dragSi === null || _dragSi === toSi) return;
+      const step = _dragSi < toSi ? 1 : -1;
+      let cur = _dragSi;
+      while (cur !== toSi) {
+        _swapSubData(ci, cur, cur + step);
+        cur += step;
+      }
+      _dragSi = null;
+      scheduleSave(); render();
+    });
+  });
+}
+
+/* ── Quick-fill criterion ── */
+function quickFill(ci, val, clearAll) {
+  if (!activeStudent) return;
+  const crit = getCrit(ci);
+  if (!crit) return;
+
+  if (clearAll) {
+    if (!confirm(`Clear all scores for "${getCritTitle(ci)}" for ${activeStudent}?`)) return;
+    if (!state.scores[activeStudent]) state.scores[activeStudent] = {};
+    state.scores[activeStudent][ci] = Array(crit.subs.length).fill(null);
+    scheduleSave(); render(); return;
+  }
+
+  // Fill only empty subcriteria
+  if (!state.scores[activeStudent]) state.scores[activeStudent] = {};
+  if (!state.scores[activeStudent][ci]) state.scores[activeStudent][ci] = Array(crit.subs.length).fill(null);
+  crit.subs.forEach((_,si) => {
+    if (state.scores[activeStudent][ci][si] === null) {
+      state.scores[activeStudent][ci][si] = val;
+    }
+  });
+  scheduleSave(); render();
+}
+
+/* ── Keyboard shortcuts ── */
+let _kbFocusSi = 0; // currently focused subcriterion index
+
+function openShortcutHelp()  { document.getElementById("shortcut-modal").classList.add("open"); }
+function closeShortcutHelp() { document.getElementById("shortcut-modal").classList.remove("open"); }
+
+function _kbIsTyping() {
+  const tag = document.activeElement?.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+}
+
+function _kbSetFocus(si) {
+  const rows = document.querySelectorAll(".crit-row");
+  rows.forEach(r => r.classList.remove("kb-focus"));
+  _kbFocusSi = Math.max(0, Math.min(rows.length - 1, si));
+  if (rows[_kbFocusSi]) {
+    rows[_kbFocusSi].classList.add("kb-focus");
+    rows[_kbFocusSi].scrollIntoView({ block:"nearest", behavior:"smooth" });
+  }
+}
+
+function _kbScore(val) {
+  if (!activeStudent || activeCrit === 21) return;
+  const rows = document.querySelectorAll(".crit-row");
+  if (!rows[_kbFocusSi]) return;
+  const si = parseInt(rows[_kbFocusSi].dataset.si);
+  if (isNaN(si)) return;
+  setScore(activeStudent, activeCrit, si, val);
+  // Auto-advance to next sub after scoring
+  if (_kbFocusSi < rows.length - 1) {
+    setTimeout(() => _kbSetFocus(_kbFocusSi + 1), 80);
+  }
+}
+
+document.addEventListener("keydown", e => {
+  // Always: Esc closes any open modal
+  if (e.key === "Escape") {
+    ["shortcut-modal","unsaved-modal","manage-entry-modal","import-criteria-modal",
+     "pdf-modal","class-modal","admin-modal","admin-login-modal","import-modal"].forEach(id => {
+      document.getElementById(id)?.classList.remove("open");
+    });
+    return;
+  }
+
+  // ? opens help (allow even when typing — it's just a modal open)
+  if (e.key === "?" && !e.ctrlKey && !e.metaKey) {
+    if (!_kbIsTyping()) { openShortcutHelp(); return; }
+  }
+
+  // All other shortcuts disabled when typing
+  if (_kbIsTyping()) return;
+
+  // Don't fire if modifier keys are held (browser shortcuts)
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+  // Only active on criterion pages with a student selected
+  if (activeCrit === 21 || !activeStudent) return;
+
+  switch(e.key) {
+    case "1": e.preventDefault(); _kbScore(0); break;
+    case "2": e.preventDefault(); _kbScore(1); break;
+    case "3": e.preventDefault(); _kbScore(2); break;
+    case "4": e.preventDefault(); _kbScore(3); break;
+
+    case "Tab":
+      e.preventDefault();
+      const rows = document.querySelectorAll(".crit-row");
+      _kbSetFocus(e.shiftKey ? _kbFocusSi - 1 : _kbFocusSi + 1);
+      break;
+
+    case "ArrowLeft": {
+      e.preventDefault();
+      const idx = state.students.indexOf(activeStudent);
+      if (idx > 0) { activeStudent = state.students[idx - 1]; _kbFocusSi = 0; render(); }
+      break;
+    }
+    case "ArrowRight": {
+      e.preventDefault();
+      const idx = state.students.indexOf(activeStudent);
+      if (idx < state.students.length - 1) { activeStudent = state.students[idx + 1]; _kbFocusSi = 0; render(); }
+      break;
+    }
+    case "ArrowUp": {
+      e.preventDefault();
+      if (activeCrit > 0) { activeCrit--; _kbFocusSi = 0; render(); }
+      break;
+    }
+    case "ArrowDown": {
+      e.preventDefault();
+      const maxCrit = getCriteria().length - 1;
+      if (activeCrit < maxCrit) { activeCrit++; _kbFocusSi = 0; render(); }
+      break;
+    }
+  }
+});
+
+// Set initial focus after every render
+const _origRender = render;
+function render() {
+  _origRender();
+  // Restore kb focus after re-render
+  requestAnimationFrame(() => _kbSetFocus(_kbFocusSi));
+}
+
 /* ── Manage criteria mode (unified with edit) ── */
-function openManageEntryModal()  { document.getElementById("manage-entry-modal").classList.add("open"); }
+let _lastManageChoice = null; // remembered per session: 'manual' | 'import' | null
+
+function openManageEntryModal() {
+  // If teacher already chose this session, skip the modal and repeat the choice
+  if (_lastManageChoice === "manual") { enterManageMode(); return; }
+  if (_lastManageChoice === "import") { openImportCriteriaModal(); return; }
+  // First time this session — show the modal
+  document.getElementById("manage-entry-modal").classList.add("open");
+}
 function closeManageEntryModal() { document.getElementById("manage-entry-modal").classList.remove("open"); }
 function openImportCriteriaModal() {
   document.getElementById("import-criteria-code").value = "";
@@ -1148,17 +1553,62 @@ function clearAllScores() {
 }
 
 /* ── Render ── */
-function render() { renderSidebar(); renderTabs(); if(activeCrit===21) renderConclusion(); else renderPanel(); }
+function render() {
+  renderSidebar();
+  renderTabs();
+  if (!state.students.length) { renderEmptyState(); return; }
+  if (activeCrit===21) renderConclusion(); else renderPanel();
+}
+
+function renderEmptyState() {
+  const panel = document.getElementById("panel");
+  const tabs  = document.getElementById("tabs");
+  tabs.innerHTML = "";
+  panel.innerHTML = `
+    <div style="max-width:480px;margin:3rem auto;text-align:center;padding:0 1rem">
+      <div style="font-size:48px;margin-bottom:1rem">🎓</div>
+      <h2 style="font-size:20px;font-weight:600;margin-bottom:8px;color:var(--text)">Welcome to your new class</h2>
+      <p style="font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:2rem">
+        Your class is set up and ready to go. Start by adding your students —
+        one by one or by importing a list of names all at once.
+      </p>
+      <div style="display:flex;flex-direction:column;gap:10px;max-width:280px;margin:0 auto">
+        <button onclick="document.getElementById('name-input').focus()"
+          style="padding:12px;font-size:14px;font-weight:500;border-radius:var(--r-md);background:#E1F5EE;border:0.5px solid #5DCAA5;color:#0F6E56;display:flex;align-items:center;justify-content:center;gap:8px">
+          <span style="font-size:18px">+</span> Add a student
+        </button>
+        <button onclick="openImportModal()"
+          style="padding:12px;font-size:14px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;gap:8px">
+          <span style="font-size:16px">📋</span> Import names from a list
+        </button>
+      </div>
+      <p style="font-size:12px;color:var(--text3);margin-top:2rem;line-height:1.6">
+        Once students are added, use <strong>Manage criteria</strong> to set up or import
+        the criteria for this class.
+      </p>
+    </div>`;
+}
 
 function renderSidebar() {
   const criteria = getCriteria();
   const criteriaItems = criteria.map((_,ci)=>{
-    const act=ci===activeCrit, hasS=hasAnyCritScore(ci);
-    return `<div class="sidebar-item${act?" active":""}${hasS?" has-scores":""}" style="position:relative" onclick="activeCrit=${ci};render();closeSidebar()">
+    const act=ci===activeCrit, hasS=hasAnyCritScore(ci), total=criteria.length;
+    const manageControls = manageMode ? `
+      <div class="drag-handle" draggable="false" title="Drag to reorder">⠿</div>
+      <div class="reorder-btns" onclick="event.stopPropagation()">
+        <button class="reorder-btn" onclick="moveCriterion(${ci},-1)" title="Move up" ${ci===0?"disabled":""}>▲</button>
+        <button class="reorder-btn" onclick="moveCriterion(${ci},1)"  title="Move down" ${ci===total-1?"disabled":""}>▼</button>
+      </div>
+      <button onclick="event.stopPropagation();removeCriterion(${ci})" title="Remove criterion"
+        style="margin-left:2px;padding:2px 6px;font-size:11px;border-radius:4px;border:0.5px solid #f09595;background:#fff;color:#A32D2D;flex-shrink:0">−</button>` : "";
+    return `<div class="sidebar-item${act?" active":""}${hasS?" has-scores":""}"
+        style="position:relative"
+        data-ci="${ci}"
+        ${manageMode?`draggable="true"`:""}
+        onclick="activeCrit=${ci};render();closeSidebar()">
       <span class="sidebar-num">${ci+1}</span>
       <span class="sidebar-label">${escH(getCritTitle(ci))}</span>
-      ${manageMode ? `<button onclick="event.stopPropagation();removeCriterion(${ci})" title="Remove criterion"
-        style="margin-left:4px;padding:2px 6px;font-size:11px;border-radius:4px;border:0.5px solid #f09595;background:#fff;color:#A32D2D;flex-shrink:0">−</button>` : ""}
+      ${manageControls}
     </div>`;
   }).join("");
 
@@ -1173,14 +1623,28 @@ function renderSidebar() {
   </div>`;
 
   document.getElementById("sidebar-list").innerHTML = conclusionItem + criteriaItems + addCritBtn;
+  if (manageMode) _initCritDrag();
 }
 
 function renderTabs() {
   const el=document.getElementById("tabs");
-  if(!state.students.length){el.innerHTML="";return;}
+  const btn=document.getElementById("btn-export-codes");
+  if(!state.students.length){
+    el.innerHTML="";
+    const legend = document.getElementById("eval-legend");
+    if (legend) legend.style.display = "none";
+    if(btn){btn.disabled=true;btn.style.opacity="0.4";btn.title="Add students first";}
+    return;
+  }
+  if(btn){btn.disabled=false;btn.style.opacity="1";btn.title="";}
+  const legend = document.getElementById("eval-legend");
+  if (legend) legend.style.display = "flex";
   el.innerHTML=state.students.map(s=>{
     const isAct=s===activeStudent;
-    const dot=hasAnyScore(s,activeCrit)?'<span class="tab-dot"></span>':"";
+    const status = getStudentEvalStatus(s);
+    const dot = status==="full"    ? '<span class="tab-dot full"    title="All criteria evaluated"></span>'
+              : status==="partial" ? '<span class="tab-dot partial" title="Partially evaluated"></span>'
+              : "";
     return `<div class="tab${isAct?" active":""}" onclick="activeStudent='${esc(s)}';render()">
       ${escH(s)}${dot}
       <span class="tab-remove" title="Hold to remove"
@@ -1247,6 +1711,20 @@ function renderPanel() {
   }
   chips+="</div>";
 
+  // ── Quick-fill bar ──
+  const unevaluated = crit.subs.filter((_,si) => getScore(activeStudent,ci,si) === null).length;
+  const quickFillBar = `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:0.75rem;padding:8px 12px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--r-sm)">
+    <span style="font-size:11px;font-weight:500;color:var(--text3);white-space:nowrap;text-transform:uppercase;letter-spacing:0.04em">Quick-fill:</span>
+    ${LEVELS.map((l,v) => `
+      <button onclick="quickFill(${ci},${v},false)"
+        style="font-size:11px;padding:3px 10px;border-radius:20px;background:${BG_CLR[v]};color:${TXT_CLR[v]};border:0.5px solid ${BD_CLR[v]};font-weight:500;white-space:nowrap"
+        title="Fill empty subcriteria with '${l}'">${l}</button>`).join("")}
+    <span style="font-size:10px;color:var(--text3);margin-left:2px">${unevaluated > 0 ? `fills ${unevaluated} empty` : "all filled ✓"}</span>
+    ${unevaluated < crit.subs.length ? `<button onclick="quickFill(${ci},null,true)"
+      style="font-size:11px;padding:3px 10px;border-radius:20px;background:var(--bg2);color:var(--text3);border:0.5px solid var(--border2);margin-left:auto"
+      title="Clear all scores for this criterion">Clear all</button>` : ""}
+  </div>`;
+
   // ── Table ──
   const gridCols = showSaColumn
     ? "2fr 52px repeat(4, 1fr) 44px 1.2fr"
@@ -1268,12 +1746,21 @@ function renderPanel() {
     const bloomLabel=bloom?` <span style="font-style:italic;font-weight:400">${escH(bloom)}</span>`:"";
     const weightHighlight = w > 1 ? `background:#E1F5EE;border-color:#5DCAA5;color:#0F6E56;font-weight:600` : '';
     const subNoteVal = getSubNote(activeStudent, ci, si);
-    table+=`<div class="crit-row" style="background:${rowBg};grid-template-columns:${gridCols}">
-      <div class="crit-label">
-        <div class="crit-n">Sub ${si+1}${bloomLabel}</div>
-        <div class="crit-t${editMode?" editable":""}" id="sub-text-${ci}-${si}"${editMode?' title="Click to edit"':""}
-          ${editMode?`onclick="editSubText(${ci},${si})"`:""}>${escH(sText)}</div>
-        ${manageMode ? `<button onclick="removeSubcriterion(${ci},${si})" style="margin-top:4px;font-size:11px;padding:2px 8px;border-radius:4px;border:0.5px solid #f09595;background:#fff;color:#A32D2D">− Remove</button>` : ""}
+    const subCount = crit.subs.length;
+    table+=`<div class="crit-row" style="background:${rowBg};grid-template-columns:${gridCols}"
+      data-si="${si}" ${manageMode?`draggable="true"`:""}>
+      <div class="crit-label" style="display:flex;align-items:flex-start;gap:4px">
+        ${manageMode ? `<div class="drag-handle" title="Drag to reorder">⠿</div>
+        <div class="reorder-btns">
+          <button class="reorder-btn" onclick="moveSubcriterion(${ci},${si},-1)" title="Move up" ${si===0?"disabled":""}>▲</button>
+          <button class="reorder-btn" onclick="moveSubcriterion(${ci},${si},1)"  title="Move down" ${si===subCount-1?"disabled":""}>▼</button>
+        </div>` : ""}
+        <div style="flex:1;min-width:0">
+          <div class="crit-n">Sub ${si+1}${bloomLabel}</div>
+          <div class="crit-t${editMode?" editable":""}" id="sub-text-${ci}-${si}"${editMode?' title="Click to edit"':""}
+            ${editMode?`onclick="editSubText(${ci},${si})"`:""}>${escH(sText)}</div>
+          ${manageMode ? `<button onclick="removeSubcriterion(${ci},${si})" style="margin-top:4px;font-size:11px;padding:2px 8px;border-radius:4px;border:0.5px solid #f09595;background:#fff;color:#A32D2D">− Remove</button>` : ""}
+        </div>
       </div>
       <div class="weight-cell">
         <input class="weight-input" type="number" min="1" max="5" value="${w}"
@@ -1312,7 +1799,8 @@ function renderPanel() {
     ${micBtn(`critnote-${ci}`, `function(v){setNote('${esc(activeStudent)}',${ci},v)}`)}
   </div>`;
 
-  panel.innerHTML = summaryHtml + chips + table + noteHtml;
+  panel.innerHTML = summaryHtml + chips + quickFillBar + table + noteHtml;
+  if (manageMode) _initSubDrag(ci);
 }
 
 /* ── Course result (80% pass threshold) ── */
@@ -1620,7 +2108,7 @@ function generateStudentPDF(name) {
   doc.setFont("helvetica", "bold");
   doc.text("CLAUDINE METER", ML, 7.5);
   doc.setFont("helvetica", "normal");
-  doc.text("Adult education — Mathematics", PW - MR, 7.5, { align: "right" });
+  doc.text("Competenties evalueren - cvo Groeipunt", PW - MR, 7.5, { align: "right" });
 
   y = 22;
   doc.setFont("helvetica", "bold");
@@ -2096,6 +2584,7 @@ async function pushClass(className, data) {
   try {
     await sheetReq("save", { className, data: payload });
     sheetTimestamp = payload._savedAt;
+    updateSyncTimestamp(payload._savedAt);
   } catch(e) {
     setSyncStatus("error", "Sync failed");
     // Show a dismissable banner with the actual error
@@ -2178,6 +2667,7 @@ async function forceLoadFromSheet() {
     saveLocalClass(currentClass, state);
     render();
     setSyncStatus("connected", currentClass);
+    updateSyncTimestamp(sheetTimestamp);
   }
 }
 
@@ -2288,6 +2778,7 @@ async function wizardCreateClass() {
     currentClass = _wizardClassName;
     localStorage.setItem(LS_CURRENT_KEY, _wizardClassName);
     saveLocalClass(_wizardClassName, state);
+    setSessionAuthed();
     await pushClass(_wizardClassName, state);
     document.getElementById("wizard-modal").classList.remove("open");
     setSyncStatus("connected", _wizardClassName);
@@ -2306,8 +2797,10 @@ async function wizardLoadClass(name, remote) {
   currentClass = name;
   localStorage.setItem(LS_CURRENT_KEY, name);
   saveLocalClass(name, state);
+  setSessionAuthed();
   document.getElementById("wizard-modal").classList.remove("open");
   setSyncStatus("connected", name);
+  updateSyncTimestamp(sheetTimestamp);
   render();
 }
 
@@ -2320,6 +2813,14 @@ function showWizardResult(msg, isErr) {
 
 /* ── Class switcher modal ── */
 function openClassModal() {
+  // If there's a pending save, warn first
+  if (saveTimer !== null) {
+    document.getElementById("unsaved-modal").classList.add("open");
+    return;
+  }
+  _openClassModalDirect();
+}
+function _openClassModalDirect() {
   const lbl = document.getElementById("current-class-label");
   if (lbl) lbl.textContent = currentClass || "none";
   const inp = document.getElementById("switch-classname");
@@ -2329,7 +2830,30 @@ function openClassModal() {
   document.getElementById("class-modal").classList.add("open");
   setTimeout(() => inp?.focus(), 100);
 }
-function closeClassModal() { document.getElementById("class-modal").classList.remove("open"); }
+function closeClassModal()  { document.getElementById("class-modal").classList.remove("open"); }
+function closeUnsavedModal(){ document.getElementById("unsaved-modal").classList.remove("open"); }
+
+async function unsavedSaveAndSwitch() {
+  closeUnsavedModal();
+  // Force-flush the pending save immediately
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  setStatus("saving");
+  try {
+    saveLocalClass(currentClass, state);
+    await pushClass(currentClass, state);
+    setStatus("saved");
+  } catch(e) { setStatus("error"); }
+  _openClassModalDirect();
+}
+function unsavedSwitchAnyway() {
+  closeUnsavedModal();
+  // Discard pending save
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  setStatus("idle");
+  _openClassModalDirect();
+}
 
 async function switchClassByName() {
   const inp  = document.getElementById("switch-classname");
@@ -2380,6 +2904,7 @@ async function switchClass(name) {
     currentClass = name;
     localStorage.setItem(LS_CURRENT_KEY, name);
     saveLocalClass(name, state);
+    setSessionAuthed();
     if (!remote) await pushClass(name, state);
     setSyncStatus("connected", name);
     render();
@@ -2392,9 +2917,53 @@ async function createNewClass() {} // no longer used — switchClass handles cre
 
 /* ── Admin panel (long-press 3s on sync pill) ── */
 function startAdminHold() {
-  adminHoldTimer = setTimeout(() => { openAdmin(); }, 3000);
+  adminHoldTimer = setTimeout(() => { openAdminGate(); }, 3000);
 }
 function cancelAdminHold() { clearTimeout(adminHoldTimer); }
+
+/* ── Admin login gate ── */
+const ADMIN_SESSION_KEY = "claudine_admin_authed";
+function isAdminAuthed()  { return sessionStorage.getItem(ADMIN_SESSION_KEY) === "1"; }
+function getAdminPwd()    { return sessionStorage.getItem(ADMIN_SESSION_KEY + "_pwd") || ""; }
+function setAdminAuthed(pwd) {
+  sessionStorage.setItem(ADMIN_SESSION_KEY, "1");
+  sessionStorage.setItem(ADMIN_SESSION_KEY + "_pwd", pwd);
+}
+function clearAdminAuth() {
+  sessionStorage.removeItem(ADMIN_SESSION_KEY);
+  sessionStorage.removeItem(ADMIN_SESSION_KEY + "_pwd");
+}
+
+function openAdminGate() {
+  if (isAdminAuthed()) { openAdmin(); return; }
+  // Show login modal
+  const inp = document.getElementById("admin-login-pwd");
+  const res = document.getElementById("admin-login-result");
+  if (inp) inp.value = "";
+  if (res) { res.className="settings-result"; res.textContent=""; }
+  document.getElementById("admin-login-modal").classList.add("open");
+  setTimeout(() => inp?.focus(), 100);
+}
+function closeAdminLogin() {
+  document.getElementById("admin-login-modal").classList.remove("open");
+}
+async function submitAdminLogin() {
+  const pwd   = document.getElementById("admin-login-pwd").value;
+  const resEl = document.getElementById("admin-login-result");
+  if (!pwd) { document.getElementById("admin-login-pwd").focus(); return; }
+  resEl.className = "settings-result ok"; resEl.textContent = "Checking…";
+  try {
+    const res = await sheetReq("verifyAdmin", { adminPassword: pwd });
+    setAdminAuthed(pwd);
+    closeAdminLogin();
+    openAdmin();
+  } catch(e) {
+    resEl.className = "settings-result err";
+    resEl.textContent = "Incorrect admin password.";
+    clearAdminAuth();
+  }
+}
+
 function openAdmin() {
   const u = document.getElementById("gs-url");
   const k = document.getElementById("gs-key");
@@ -2402,7 +2971,9 @@ function openAdmin() {
   if (k) k.value = (state.gsConfig && state.gsConfig.key) || GS_KEY;
   document.getElementById("admin-modal").classList.add("open");
 }
-function closeAdmin() { document.getElementById("admin-modal").classList.remove("open"); }
+function closeAdmin() {
+  document.getElementById("admin-modal").classList.remove("open");
+}
 function saveAdminSettings() {
   if (!state.gsConfig) state.gsConfig = {};
   state.gsConfig.url = document.getElementById("gs-url").value.trim();
@@ -2418,7 +2989,7 @@ async function testConnection() {
   try {
     const res  = await fetch(url);
     const json = await res.json();
-    if (json.ok && el) { el.className="settings-result ok"; el.textContent="Connected!"; }
+    if (json.ok && el) { el.className="settings-result ok"; el.textContent="Connected! " + (json.message||""); }
     else throw new Error("Unexpected response");
   } catch(e) {
     if (el) { el.className="settings-result err"; el.textContent="Failed: "+e.message; }
@@ -2454,6 +3025,34 @@ function setSyncStatus(s, text) {
     el.className      = "sync-status " + s;
     label.textContent = text;
   });
+  // Show last synced time when connected
+  if (s === "connected") updateSyncTimestamp();
+}
+
+function formatSyncTime(isoString) {
+  if (!isoString) return "—";
+  const d     = new Date(isoString);
+  const now   = new Date();
+  const today = now.toDateString() === d.toDateString();
+  const yesterday = new Date(now - 86400000).toDateString() === d.toDateString();
+  const timeStr = d.toLocaleTimeString("nl-BE", { hour:"2-digit", minute:"2-digit" });
+  if (today)     return `today ${timeStr}`;
+  if (yesterday) return `yesterday ${timeStr}`;
+  return d.toLocaleDateString("nl-BE", { day:"2-digit", month:"short" }) + ` ${timeStr}`;
+}
+
+function updateSyncTimestamp(isoString) {
+  // Use provided timestamp, or sheetTimestamp, or state._savedAt
+  const ts  = isoString || sheetTimestamp || state._savedAt || null;
+  const lbl = document.getElementById("last-synced-label");
+  const el  = document.getElementById("last-synced-time");
+  if (!lbl || !el) return;
+  if (ts) {
+    lbl.style.display = "block";
+    el.textContent    = formatSyncTime(ts);
+  } else {
+    lbl.style.display = "none";
+  }
 }
 
 /* ── Default state factory ── */
@@ -2512,13 +3111,41 @@ function cancelRemoveHold() {
   _removeHoldProg  = null;
 }
 
+async function adminResetPassword() {
+  const classCode = (document.getElementById("reset-pwd-class")?.value  || "").trim();
+  const newPwd    = (document.getElementById("reset-pwd-new")?.value    || "");
+  const confirm   = (document.getElementById("reset-pwd-confirm")?.value || "");
+  const resEl     = document.getElementById("reset-pwd-result");
+
+  if (!classCode) { resEl.className="settings-result err"; resEl.textContent="Enter a class code."; return; }
+  if (!newPwd)    { resEl.className="settings-result err"; resEl.textContent="Enter a new password."; return; }
+  if (newPwd.length < 4) { resEl.className="settings-result err"; resEl.textContent="Password must be at least 4 characters."; return; }
+  if (newPwd !== confirm) { resEl.className="settings-result err"; resEl.textContent="Passwords don't match."; return; }
+
+  resEl.className="settings-result ok"; resEl.textContent="Resetting…";
+  try {
+    const newHash = await hashPassword(newPwd);
+    await sheetReq("resetTeacherPassword", { adminPassword: getAdminPwd(), className: classCode, newPwdHash: newHash });
+    if (classCode === currentClass) {
+      state.teacherPwdHash = newHash;
+      saveLocalClass(currentClass, state);
+    }
+    resEl.className="settings-result ok";
+    resEl.textContent=`✓ Password reset for "${classCode}". Tell the teacher their new password.`;
+    document.getElementById("reset-pwd-new").value = "";
+    document.getElementById("reset-pwd-confirm").value = "";
+  } catch(e) {
+    resEl.className="settings-result err"; resEl.textContent="Error: " + e.message;
+  }
+}
+
 /* ── Debug helpers ── */
 async function debugRebuildIndex() {
   const el = document.getElementById("debug-index-result");
   if (!currentClass) { el.textContent = "No class loaded."; return; }
   el.textContent = "Rebuilding…";
   try {
-    const res = await sheetReq("rebuildIndex", { className: currentClass });
+    const res = await sheetReq("rebuildIndex", { adminPassword: getAdminPwd(), className: currentClass });
     el.textContent = res.message + "\n" + JSON.stringify(res.rows, null, 2);
   } catch(e) { el.textContent = "Error: " + e.message; }
 }
@@ -2526,7 +3153,7 @@ async function debugReadIndex() {
   const el = document.getElementById("debug-index-result");
   el.textContent = "Reading…";
   try {
-    const res = await sheetReq("readIndex", {});
+    const res = await sheetReq("readIndex", { adminPassword: getAdminPwd() });
     el.textContent = `${res.rows.length} rows:\n` + res.rows.map(r => r.join(" | ")).join("\n");
   } catch(e) { el.textContent = "Error: " + e.message; }
 }
@@ -2905,36 +3532,198 @@ function _showCriterionResult(ci) {
   showStudentScreen("results");
 }
 
-/* ── Export access codes ── */
+/* ── Export access codes PDF ── */
 function exportAccessCodes() {
   if (!state.students.length) { alert("No students yet."); return; }
-  // Ensure all students have codes
   state.students.forEach(name => ensureCode(name));
   scheduleSave();
 
-  const lines = [
-    `Claudine Meter — Student Access Codes`,
-    `Class: ${currentClass || "—"}`,
-    `Generated: ${new Date().toLocaleDateString("nl-BE", { day:"2-digit", month:"long", year:"numeric" })}`,
-    ``,
-    `Share each student's personal code privately. Keep this document confidential.`,
-    ``,
-    `Class code: ${currentClass || "—"}`,
-    ``,
-    `Student name                    Personal code`,
-    `${"─".repeat(55)}`,
-    ...state.students.map(name => {
-      const code = state.studentCodes[name] || "—";
-      const pad  = Math.max(1, 36 - name.length);
-      return `${name}${" ".repeat(pad)}${code}`;
-    })
-  ];
+  const { jsPDF } = window.jspdf;
+  const doc  = new jsPDF({ unit:"mm", format:"a4" });
+  const PW   = 210, PH = 297;
+  const ML   = 14, MR = 14, MT = 18;
+  const CW   = PW - ML - MR;
+  const today = new Date().toLocaleDateString("nl-BE", { day:"2-digit", month:"long", year:"numeric" });
+  const cls   = currentClass || "—";
 
-  const blob = new Blob([lines.join("\n")], { type:"text/plain" });
-  const a    = document.createElement("a");
-  a.href     = URL.createObjectURL(blob);
-  a.download = `access_codes_${currentClass || "class"}.txt`;
-  a.click();
+  // ── Colour palette ──
+  const GREEN  = [74, 124, 46];
+  const DKGRAY = [40, 40, 40];
+  const MDGRAY = [100, 100, 100];
+  const LTGRAY = [220, 220, 220];
+  const BGGREEN= [240, 247, 235];
+  const WHITE  = [255, 255, 255];
+
+  // ════════════════════════════════════════════
+  //  PAGE 1 — Teacher overview table
+  // ════════════════════════════════════════════
+
+  // Header bar
+  doc.setFillColor(...GREEN);
+  doc.rect(0, 0, PW, 14, "F");
+  doc.setTextColor(...WHITE);
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(11);
+  doc.text("Claudine Meter — Student Access Codes", ML, 9);
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(9);
+  doc.text(`Confidential — keep this document private`, PW - MR, 9, { align:"right" });
+
+  // Subtitle
+  doc.setTextColor(...DKGRAY);
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(13);
+  doc.text(`Class: ${cls}`, ML, MT + 4);
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(9);
+  doc.setTextColor(...MDGRAY);
+  doc.text(`Generated: ${today}  ·  ${state.students.length} students`, ML, MT + 10);
+  doc.text(`Students log in with their personal code only — no password or name needed.`, ML, MT + 15);
+
+  // Table header
+  let y = MT + 22;
+  const COL1 = ML, COL2 = ML + CW * 0.65;
+  const ROW_H = 8;
+
+  doc.setFillColor(...GREEN);
+  doc.rect(ML, y, CW, ROW_H, "F");
+  doc.setTextColor(...WHITE);
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(9);
+  doc.text("Student name", COL1 + 3, y + 5.5);
+  doc.text("Personal access code", COL2 + 3, y + 5.5);
+  y += ROW_H;
+
+  // Table rows
+  state.students.forEach((name, idx) => {
+    const code = state.studentCodes[name] || "—";
+    const rowBg = idx % 2 === 0 ? WHITE : BGGREEN;
+    doc.setFillColor(...rowBg);
+    doc.rect(ML, y, CW, ROW_H, "F");
+    // subtle border
+    doc.setDrawColor(...LTGRAY);
+    doc.setLineWidth(0.2);
+    doc.rect(ML, y, CW, ROW_H, "S");
+
+    doc.setTextColor(...DKGRAY);
+    doc.setFont("helvetica","normal");
+    doc.setFontSize(9);
+    doc.text(name, COL1 + 3, y + 5.5);
+    doc.setFont("courier","bold");
+    doc.setFontSize(10);
+    doc.text(code, COL2 + 3, y + 5.5);
+    y += ROW_H;
+
+    // New page if needed
+    if (y > PH - 20) {
+      doc.addPage();
+      y = MT;
+    }
+  });
+
+  // Footer page 1
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...MDGRAY);
+  doc.text("Page 1 — Teacher overview", PW / 2, PH - 8, { align:"center" });
+
+  // ════════════════════════════════════════════
+  //  PAGE 2 — Cut-out slips
+  // ════════════════════════════════════════════
+  doc.addPage();
+
+  // Header bar
+  doc.setFillColor(...GREEN);
+  doc.rect(0, 0, PW, 14, "F");
+  doc.setTextColor(...WHITE);
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(11);
+  doc.text("Claudine Meter — Cut-out slips", ML, 9);
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(9);
+  doc.text(`Class: ${cls}  ·  Cut along the dotted lines`, PW - MR, 9, { align:"right" });
+
+  // Slips — 3 columns, up to 10 rows = 30 per page
+  const SLIP_W  = (CW - 8) / 3;   // 3 columns with gaps
+  const SLIP_H  = 22;
+  const SLIP_GAP_X = 4;
+  const SLIP_GAP_Y = 3;
+  const COLS = 3;
+  const START_Y = 20;
+
+  state.students.forEach((name, idx) => {
+    const code   = state.studentCodes[name] || "—";
+    const col    = idx % COLS;
+    const row    = Math.floor(idx / COLS);
+    const pageNo = Math.floor(row / 10);
+
+    if (pageNo > 0 && idx === pageNo * COLS * 10) {
+      doc.addPage();
+      // repeat header on extra slip pages
+      doc.setFillColor(...GREEN);
+      doc.rect(0, 0, PW, 14, "F");
+      doc.setTextColor(...WHITE);
+      doc.setFont("helvetica","bold");
+      doc.setFontSize(11);
+      doc.text("Claudine Meter — Cut-out slips (continued)", ML, 9);
+    }
+
+    const localRow = row % 10;
+    const sx = ML + col * (SLIP_W + SLIP_GAP_X);
+    const sy = START_Y + localRow * (SLIP_H + SLIP_GAP_Y);
+
+    // Slip background
+    doc.setFillColor(...BGGREEN);
+    doc.setDrawColor(...GREEN);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(sx, sy, SLIP_W, SLIP_H, 2, 2, "FD");
+
+    // Dotted cut line hint — top border dashed
+    doc.setDrawColor(...LTGRAY);
+    doc.setLineWidth(0.2);
+    doc.setLineDashPattern([1, 1], 0);
+    doc.line(sx, sy, sx + SLIP_W, sy);
+    doc.setLineDashPattern([], 0);
+
+    // Claudine Meter label
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(6);
+    doc.setTextColor(...GREEN);
+    doc.text("CLAUDINE METER", sx + SLIP_W / 2, sy + 4, { align:"center" });
+
+    // Student name
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...DKGRAY);
+    // Truncate long names
+    let displayName = name;
+    while (doc.getTextWidth(displayName) > SLIP_W - 4 && displayName.length > 5) {
+      displayName = displayName.slice(0, -1);
+    }
+    if (displayName !== name) displayName += "…";
+    doc.text(displayName, sx + SLIP_W / 2, sy + 10, { align:"center" });
+
+    // Code label
+    doc.setFont("helvetica","normal");
+    doc.setFontSize(6.5);
+    doc.setTextColor(...MDGRAY);
+    doc.text("Personal code:", sx + SLIP_W / 2, sy + 15, { align:"center" });
+
+    // Code value
+    doc.setFont("courier","bold");
+    doc.setFontSize(10);
+    doc.setTextColor(...GREEN);
+    doc.text(code, sx + SLIP_W / 2, sy + 20, { align:"center" });
+  });
+
+  // Footer page 2
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...MDGRAY);
+  doc.text("Page 2 — Cut-out slips · Cut along dotted lines and hand one to each student", PW / 2, PH - 8, { align:"center" });
+
+  // Save
+  doc.save(`access_codes_${cls}.pdf`);
 }
 
 /* ── Boot ── */
@@ -2958,6 +3747,12 @@ document.getElementById("name-input").addEventListener("keydown",e=>{if(e.key===
   // Restore last active class from localStorage
   const savedClass = localStorage.getItem(LS_CURRENT_KEY);
   if (savedClass) {
+    // If not authenticated this session, require password
+    if (!isSessionAuthed()) {
+      render();
+      showRolePicker();
+      return;
+    }
     currentClass = savedClass;
     const local  = loadLocalClass(savedClass);
     if (local) {
@@ -2967,6 +3762,7 @@ document.getElementById("name-input").addEventListener("keydown",e=>{if(e.key===
       if (state.students.length) activeStudent = state.students[0];
     }
     setSyncStatus("connected", savedClass);
+    updateSyncTimestamp(state._savedAt || null);
     render();
     // Quietly sync from sheet in background
     try {
