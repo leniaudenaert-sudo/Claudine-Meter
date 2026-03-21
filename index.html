@@ -86,10 +86,26 @@ button.edit-active { background: #FAEEDA; border-color: #EF9F27; color: #854F0B;
 .leg-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
 
 /* Student tabs */
-.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1rem; min-height: 32px; }
+.tabs-wrap {
+  display: flex; align-items: center; gap: 4px; margin-bottom: 6px; min-height: 36px;
+}
+.tabs-arrow {
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+  border: 0.5px solid var(--border2); background: var(--bg);
+  cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center;
+  color: var(--text2); transition: all 0.1s; user-select: none;
+}
+.tabs-arrow:hover { background: var(--bg2); color: var(--text); }
+.tabs-arrow:disabled { opacity: 0.25; cursor: default; pointer-events: none; }
+.tabs {
+  display: flex; gap: 6px; flex: 1; overflow-x: auto; scroll-behavior: smooth;
+  min-height: 32px; scrollbar-width: none; -ms-overflow-style: none;
+  padding: 2px 0;
+}
+.tabs::-webkit-scrollbar { display: none; }
 .tab {
   display: flex; align-items: center; gap: 4px; padding: 5px 12px; border-radius: 20px;
-  cursor: pointer; font-size: 13px; border: 0.5px solid var(--border2);
+  cursor: pointer; font-size: 13px; border: 0.5px solid var(--border2); flex-shrink: 0;
   background: var(--bg2); color: var(--text2); transition: all 0.12s; user-select: none;
 }
 .tab.active { background: var(--bg); color: var(--text); border-color: #666; font-weight: 500; }
@@ -110,7 +126,7 @@ button.edit-active { background: #FAEEDA; border-color: #EF9F27; color: #854F0B;
 
 /* Criteria table */
 .table-wrap { border: 0.5px solid var(--border); border-radius: var(--r-md); overflow: hidden; margin-bottom: 0.75rem; }
-.tbl-head { display: grid; background: var(--bg2); border-bottom: 0.5px solid var(--border); }
+.tbl-head { display: grid; border-bottom: 0.5px solid var(--border); }
 .th { padding: 8px 4px; font-size: 11px; font-weight: 500; color: var(--text3); text-align: center; line-height: 1.3; border-right: 0.5px solid var(--border); }
 .th:first-child { padding: 8px 12px; text-align: left; }
 .th:last-child { border-right: none; }
@@ -361,8 +377,9 @@ textarea:focus { border-color: #888; }
   .score-cell { padding: 12px 6px; min-height: 52px; }
   .dot-ring { width: 26px; height: 26px; }
 
-  /* Larger touch targets on tabs */
+  /* Tabs single line — larger touch targets on mobile */
   .tab { padding: 8px 14px; font-size: 14px; }
+  .tabs-arrow { width: 32px; height: 32px; font-size: 18px; }
 
   /* Weight input larger */
   .weight-cell { padding: 8px 4px; }
@@ -401,9 +418,9 @@ textarea:focus { border-color: #888; }
   /* Modals full-width on mobile */
   .modal, .settings-modal { width: 95vw !important; max-width: 95vw !important; }
 
-  /* Top bar wraps nicely */
-  .top-bar { gap: 6px; }
-  .sync-status { font-size: 12px; }
+  /* Quick fill button: arrow only on mobile */
+  .qf-btn { font-size: 0 !important; padding: 2px 5px !important; }
+  .qf-btn::before { content: "↓"; font-size: 10px; }
 }
 
 @media (min-width: 769px) and (max-width: 1024px) {
@@ -413,8 +430,34 @@ textarea:focus { border-color: #888; }
   .dot-ring { width: 22px; height: 22px; }
   .main { padding: 1.25rem 1.25rem 3rem; }
 }
+
+/* ── Start screen ── */
+.start-screen {
+  display: none; position: fixed; inset: 0; z-index: 400;
+  background: #009a9b;
+  flex-direction: column; align-items: center; justify-content: center;
+  padding: 2rem; gap: 1.75rem;
+}
+.start-screen.open { display: flex; }
+.start-logo { width: clamp(160px, 55vw, 260px); filter: brightness(0) invert(1); }
+.start-app-block { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.start-app-title { font-size: clamp(20px, 5vw, 28px); font-weight: 500; color: #fff; letter-spacing: -0.01em; }
+.start-app-sub { font-size: 12px; color: rgba(255,255,255,0.6); letter-spacing: 0.1em; text-transform: uppercase; }
+.start-divider { width: 40px; height: 1px; background: rgba(255,255,255,0.3); }
+.start-prompt { font-size: 13px; color: rgba(255,255,255,0.75); }
+.start-btns { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 300px; }
+.start-btn {
+  padding: 14px 24px; border-radius: 30px; font-size: 15px; font-weight: 500;
+  cursor: pointer; font-family: var(--font); border: none; text-align: center;
+  transition: opacity 0.15s; width: 100%;
+}
+.start-btn:hover { opacity: 0.85; }
+.start-btn-primary { background: #fff; color: #007e7f; }
+.start-btn-outline { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,0.45); }
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 
@@ -478,6 +521,27 @@ textarea:focus { border-color: #888; }
     </div>
   </aside>
 
+
+  <!-- Start screen -->
+  <div class="start-screen" id="start-screen">
+    <img class="start-logo" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDI3LjIuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxhYWdfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiCgkgdmlld0JveD0iMCAwIDg0MS44OSA1OTUuMjgiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDg0MS44OSA1OTUuMjg7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4KCgo8Zz4KCTxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik0xMjAuMjcsMzkwLjI4aDQuMDRsMTMuNzctMzcuNjVoLTQuMzRsLTkuODgsMjguMjljLTAuNzUsMi4xLTEuMjcsNC4xOS0xLjM1LDQuNjRoLTAuMTUKCQljLTAuMTUtMC41Mi0wLjY3LTIuNzctMS4zNS00LjcybC05Ljg4LTI4Ljg5bC00LjE5LDAuOUwxMjAuMjcsMzkwLjI4TDEyMC4yNywzOTAuMjh6IE0xNTcuMSwzOTAuNzJjNS44NCwwLDEwLjE4LTIuODQsMTIuNS02Ljk2CgkJYzEuOC0zLjA3LDIuODQtNy4wNCwyLjg0LTEyLjEzYzAtNS45MS0xLjEyLTEwLjI1LTMuMjktMTMuNTVjLTIuMTctMy4yOS02LjA2LTYuMzYtMTIuMi02LjM2Yy01LjI0LDAtOS4xMywyLjQtMTEuNDUsNS40NgoJCWMtMi40NywzLjI5LTMuODksOC4xNi0zLjg5LDEzLjkyYzAsNS42MSwxLjIsMTAuMDMsMy40NCwxMy40QzE0Ny4zNywzODguMDMsMTUxLjM0LDM5MC43MiwxNTcuMSwzOTAuNzJMMTU3LjEsMzkwLjcyegoJCSBNMTU3LjE3LDM4Ny4zNmMtNC4wNCwwLTcuMTktMi4xNy04LjYxLTQuNDljLTEuNTctMi41NC0yLjU1LTcuMDQtMi41NS0xMi4zNWMwLTQuNjQsMC44Mi04LjIzLDIuMjUtMTAuNzgKCQljMS4zNS0yLjQ3LDQuNDktNC42NCw4LjYxLTQuNjRjMy45NywwLDcuMzQsMi4xLDguODMsNS4wOWMxLjQyLDIuNjksMi4xNyw2LjQ0LDIuMTcsMTEuNzVjMCw0LjM0LTAuNDUsNi42Ni0xLjgsOS43MwoJCUMxNjQuNjYsMzg0Ljg5LDE2MS42NywzODcuMzYsMTU3LjE3LDM4Ny4zNkwxNTcuMTcsMzg3LjM2eiBNMTg3LjM0LDM5MC41YzEuMiwwLDEuODctMC4xNSwzLjA3LTAuNjdsLTAuOS0yLjcKCQljLTAuMTUsMC4wNy0wLjY3LDAuMjItMS4wNSwwLjIyYy0xLjcyLDAtMi4zMi0wLjktMi4zMi00LjA0di0zOS4zN2MwLTUuNDYtMC44Mi04LjE2LTAuOTctOC41M2wtNC4wNCwwLjc1CgkJYzAuMTUsMC40NSwwLjksMi45MiwwLjksNy42M3Y0MC40MkMxODIuMDMsMzg4LjYzLDE4My43NSwzOTAuNSwxODcuMzQsMzkwLjVMMTg3LjM0LDM5MC41eiBNMjAzLjgxLDM5MC4yaDMuODJsOC4wMS0yOS4xMgoJCWMwLjMtMC45NywwLjY3LTIuNzcsMC43NS0zLjIyaDAuMTVjMC4wOCwwLjMsMC40NSwxLjg3LDAuOSwzLjQ0bDguMDEsMjguODloNC4wNGwxMC40OC0zNy41N2gtNC4yN2wtNy4xMSwyNy45OQoJCWMtMC4zNywxLjQyLTAuNjcsMi44NC0wLjk3LDQuMjdoLTAuMTVsLTEuMi00LjQ5bC03LjQxLTI3Ljc3aC00LjM0bC03LjQ5LDI3LjY5Yy0wLjUyLDEuODctMC45NywzLjg5LTEuMDUsNC4zNGgtMC4yMgoJCWMtMC4wOC0wLjQ1LTAuNTItMi42Mi0xLjEyLTQuOTRsLTcuMTktMjcuNzdsLTQuMDQsMC44MkwyMDMuODEsMzkwLjJMMjAzLjgxLDM5MC4yeiBNMjcwLjg3LDM5MS4wMmwyLjEtMi45MgoJCWMtMi45Mi0xLjQyLTMuMzctMy42Ny0zLjIyLTkuNThsMC4zLTEzLjRjMC4wNy0zLjIyLDAtNS45OS0xLjM1LTguNjhjLTEuNS0yLjk5LTQuNTctNC42NC05LjA2LTQuNjRjLTUuMjQsMC0xMC4xOCwxLjk1LTE0LjYsNS4wMQoJCWwyLjAyLDIuOTJjMi43Ny0yLjQsNy42My00LjU3LDEyLjA1LTQuNTdjMi41NCwwLDQuMTksMC44Miw1LjQ2LDIuMTdjMS4yLDEuMzUsMS41LDMuMjksMS41LDYuODl2My40NAoJCWMtMC4zNy0wLjA3LTEuOC0wLjE1LTMuMjktMC4xNWMtMTEuODMsMC0xOS4wOSw0LjM0LTE5LjA5LDEyLjhjMCw1LjAxLDIuNjIsMTAuNCwxMS44MywxMC40YzQuMjcsMCw3LjU2LTEuNTcsMTAuNzgtNS4wOQoJCUMyNjYuOSwzODguMzMsMjY4LjQ4LDM5MC4yLDI3MC44NywzOTEuMDJMMjcwLjg3LDM5MS4wMnogTTI1Ni4yLDM4Ny42NmMtNS44NCwwLTguMDEtMy4yMi04LjAxLTcuNzFjMC02LjUxLDQuNTctOS41OCwxNC4zNy05LjU4CgkJYzEuMTIsMCwyLjQ3LDAuMDgsMy4zNywwLjE1YzAsMS4yNy0wLjE1LDYuNDQtMC4xNSw3LjkzYzAsMC42LTAuMDcsMy4wNywwLDMuNTJDMjYzLjc2LDM4NS40OCwyNjAuMTcsMzg3LjY2LDI1Ni4yLDM4Ny42NgoJCUwyNTYuMiwzODcuNjZ6IE0yOTEuMDgsMzkwLjhjOC4wMSwwLDEzLjE3LTQuNzIsMTMuMTctMTEuNTNjMC01LjA5LTIuNzctOC42MS05LjU4LTEwLjAzbC00Ljc5LTAuOTcKCQljLTQuMTktMC45LTYuMjEtMi44NC02LjIxLTYuNDRjMC00LjA0LDIuOTItNy4wNCw4LjA4LTcuMDRjMy4zNywwLDYuMzYsMS4xMiw5LjEzLDIuN2wxLjY1LTIuOTljLTIuODQtMS44LTYuNjYtMi45Mi0xMC42My0yLjkyCgkJYy03LjYzLDAtMTIuNDMsNC40OS0xMi40MywxMC43YzAsNS4yNCwzLjI5LDguNjEsOS4wNiw5LjhsNC42NCwwLjljNS4wMiwxLjA1LDYuODEsMy41Miw2LjgxLDcuMDRjMCw0LjQ5LTMuMjksNy41Ni04LjY4LDcuNTYKCQljLTQuMjcsMC04LjIzLTEuMi0xMS42LTMuMzdsLTEuNTcsMi45OUMyODEuNTgsMzg5LjQ1LDI4Ni4zNywzOTAuOCwyOTEuMDgsMzkwLjhMMjkxLjA4LDM5MC44eiBNMzIyLjI5LDM5MC44CgkJYzguMDEsMCwxMy4xNy00LjcyLDEzLjE3LTExLjUzYzAtNS4wOS0yLjc3LTguNjEtOS41OC0xMC4wM2wtNC43OS0wLjk3Yy00LjE5LTAuOS02LjIxLTIuODQtNi4yMS02LjQ0YzAtNC4wNCwyLjkyLTcuMDQsOC4wOC03LjA0CgkJYzMuMzcsMCw2LjM2LDEuMTIsOS4xMywyLjdsMS42NS0yLjk5Yy0yLjg0LTEuOC02LjY2LTIuOTItMTAuNjMtMi45MmMtNy42NCwwLTEyLjQzLDQuNDktMTIuNDMsMTAuN2MwLDUuMjQsMy4yOSw4LjYxLDkuMDYsOS44CgkJbDQuNjQsMC45YzUuMDEsMS4wNSw2LjgxLDMuNTIsNi44MSw3LjA0YzAsNC40OS0zLjI5LDcuNTYtOC42OCw3LjU2Yy00LjI3LDAtOC4yMy0xLjItMTEuNi0zLjM3bC0xLjU3LDIuOTkKCQlDMzEyLjc5LDM4OS40NSwzMTcuNTgsMzkwLjgsMzIyLjI5LDM5MC44TDMyMi4yOSwzOTAuOHogTTM1OC4wNywzOTAuNjVjNC43OSwwLDguNzYtMS41LDExLjktNC4xOWwtMS42NS0yLjYyCgkJYy0yLjU1LDIuMzItNS42OSwzLjM3LTkuNDMsMy4zN2MtNC4xOSwwLTcuNTYtMS42NS05LjU4LTQuNjRjLTEuNDItMi4xLTIuNC01LjMxLTIuNDctOS4yOHYtMS45NWgyMy45NXYtMC44MgoJCWMwLTguMzgtMS40Mi0xMS45LTQuMjctMTQuODljLTIuMjUtMi4yNS01LjM5LTMuODItOS4zNi0zLjgyYy00LjU3LDAtOC4wMSwyLjAyLTEwLjU1LDUuMDFjLTIuOTksMy41Mi00LjQyLDcuNzgtNC40MiwxNC4xNQoJCUMzNDIuMiwzODIuNzIsMzQ3LjgyLDM5MC42NSwzNTguMDcsMzkwLjY1TDM1OC4wNywzOTAuNjV6IE0zNDYuODQsMzY4LjI3YzAuMzctOC44Myw0LjQ5LTEzLjI1LDEwLjEtMTMuMjUKCQljMy40NCwwLDYuMTQsMS42NSw3LjU2LDMuOTdjMS4yLDEuOTUsMS45NSw0Ljc5LDEuOTUsOS4yOEgzNDYuODRMMzQ2Ljg0LDM2OC4yN3ogTTM4MC4xNSwzODkuOWgzLjk3di0yOC42NwoJCWMyLjk5LTMuNDQsNy42My01Ljc2LDExLTUuNzZjMi4xLDAsMy44OSwwLjc1LDQuODcsMS44YzEuMTIsMS40MiwxLjcyLDIuODQsMS43Miw2LjM2djI2LjI3aDQuMDR2LTI4LjM3CgkJYzAtMS45NS0wLjUyLTMuNzQtMS40Mi01LjE2Yy0xLjQyLTIuNjItNC40OS00LjQyLTguMzEtNC40MmMtNC4yNywwLTguMzEsMi4xLTExLjk4LDUuOTljMC0zLjI5LTEuMDUtNS42MS0xLjItNS45MWwtMy45NywxLjA1CgkJYzAuNTIsMS4yNywxLjI3LDMuMjksMS4yNyw3LjQxVjM4OS45TDM4MC4xNSwzODkuOXogTTQzMS41NywzOTAuNjVjNC43OSwwLDguNzYtMS41LDExLjktNC4xOWwtMS42NS0yLjYyCgkJYy0yLjU1LDIuMzItNS42OSwzLjM3LTkuNDMsMy4zN2MtNC4xOSwwLTcuNTYtMS42NS05LjU4LTQuNjRjLTEuNDItMi4xLTIuNC01LjMxLTIuNDctOS4yOHYtMS45NWgyMy45NXYtMC44MgoJCWMwLTguMzgtMS40Mi0xMS45LTQuMjctMTQuODljLTIuMjUtMi4yNS01LjM5LTMuODItOS4zNi0zLjgyYy00LjU3LDAtOC4wMSwyLjAyLTEwLjU1LDUuMDFjLTIuOTksMy41Mi00LjQyLDcuNzgtNC40MiwxNC4xNQoJCUM0MTUuNywzODIuNzIsNDIxLjMyLDM5MC42NSw0MzEuNTcsMzkwLjY1TDQzMS41NywzOTAuNjV6IE00MjAuMzUsMzY4LjI3YzAuMzctOC44Myw0LjQ5LTEzLjI1LDEwLjEtMTMuMjUKCQljMy40NCwwLDYuMTQsMS42NSw3LjU2LDMuOTdjMS4yLDEuOTUsMS45NSw0Ljc5LDEuOTUsOS4yOEg0MjAuMzVMNDIwLjM1LDM2OC4yN3ogTTQ1My42NSwzODkuOWgzLjk3di0yOC42NwoJCWMyLjk5LTMuNDQsNy42NC01Ljc2LDExLTUuNzZjMi4xLDAsMy44OSwwLjc1LDQuODYsMS44YzEuMTIsMS40MiwxLjcyLDIuODQsMS43Miw2LjM2djI2LjI3aDQuMDR2LTI4LjM3CgkJYzAtMS45NS0wLjUyLTMuNzQtMS40Mi01LjE2Yy0xLjQyLTIuNjItNC40OS00LjQyLTguMzEtNC40MmMtNC4yNywwLTguMzEsMi4xLTExLjk4LDUuOTljMC0zLjI5LTEuMDUtNS42MS0xLjItNS45MWwtMy45NywxLjA1CgkJYzAuNTIsMS4yNywxLjI3LDMuMjksMS4yNyw3LjQxVjM4OS45TDQ1My42NSwzODkuOXogTTUwNC40OCwzOTAuNzJjNS44NCwwLDEwLjE4LTIuODQsMTIuNS02Ljk2YzEuOC0zLjA3LDIuODQtNy4wNCwyLjg0LTEyLjEzCgkJYzAtNS45MS0xLjEyLTEwLjI1LTMuMjktMTMuNTVjLTIuMTctMy4yOS02LjA2LTYuMzYtMTIuMi02LjM2Yy01LjI0LDAtOS4xMywyLjQtMTEuNDUsNS40NmMtMi40NywzLjI5LTMuODksOC4xNi0zLjg5LDEzLjkyCgkJYzAsNS42MSwxLjIsMTAuMDMsMy40NCwxMy40QzQ5NC43NCwzODguMDMsNDk4LjcxLDM5MC43Miw1MDQuNDgsMzkwLjcyTDUwNC40OCwzOTAuNzJ6IE01MDQuNTUsMzg3LjM2CgkJYy00LjA0LDAtNy4xOS0yLjE3LTguNjEtNC40OWMtMS41Ny0yLjU0LTIuNTUtNy4wNC0yLjU1LTEyLjM1YzAtNC42NCwwLjgyLTguMjMsMi4yNS0xMC43OGMxLjM1LTIuNDcsNC40OS00LjY0LDguNjEtNC42NAoJCWMzLjk3LDAsNy4zNCwyLjEsOC44Myw1LjA5YzEuNDIsMi42OSwyLjE3LDYuNDQsMi4xNywxMS43NWMwLDQuMzQtMC40NSw2LjY2LTEuOCw5LjczQzUxMi4wMywzODQuODksNTA5LjA0LDM4Ny4zNiw1MDQuNTUsMzg3LjM2CgkJTDUwNC41NSwzODcuMzZ6IE01MjkuNzcsMzg5LjloMy45N3YtMjguNjdjMi45OS0zLjQ0LDcuNjQtNS43NiwxMS01Ljc2YzIuMSwwLDMuODksMC43NSw0Ljg2LDEuOGMxLjEyLDEuNDIsMS43MiwyLjg0LDEuNzIsNi4zNgoJCXYyNi4yN2g0LjA0di0yOC4zN2MwLTEuOTUtMC41Mi0zLjc0LTEuNDItNS4xNmMtMS40Mi0yLjYyLTQuNDktNC40Mi04LjMxLTQuNDJjLTQuMjcsMC04LjMxLDIuMS0xMS45OCw1Ljk5CgkJYzAtMy4yOS0xLjA1LTUuNjEtMS4yLTUuOTFsLTMuOTcsMS4wNWMwLjUyLDEuMjcsMS4yNywzLjI5LDEuMjcsNy40MVYzODkuOUw1MjkuNzcsMzg5Ljl6IE01ODAuMjIsMzkwLjQzCgkJYzQuMjcsMCw3LjcxLTEuNSwxMC4yNS00Ljk0YzAuMDgsMS44LDAuNjcsMy45NywwLjksNC40Mmg0LjEyYy0wLjgyLTIuMTctMS4xMi01LjI0LTEuMTItMTEuMjN2LTQyLjc0bC00LjA0LTAuNjd2MTYuNjIKCQljMCwyLjAyLDAuMDcsNC40MiwwLjA3LDQuOTRjLTIuMjUtMi45OS01LjkxLTQuNzktMTAuMzMtNC43OWMtMi45OSwwLTUuNjEsMC45Ny04LjE2LDMuMTRjLTQuMjcsMy41Mi02LjUxLDguOTgtNi41MSwxNi4zMgoJCWMwLDUuNTQsMS4yNywxMC4zMywzLjUyLDEzLjQ3QzU3MS4zOSwzODguNDgsNTc1LjIxLDM5MC40Myw1ODAuMjIsMzkwLjQzTDU4MC4yMiwzOTAuNDN6IE01ODAuMzcsMzg2Ljk4CgkJYy0zLjg5LDAtNi42Ni0xLjU3LTguNTMtNC43OWMtMS4zNS0yLjMyLTEuOTUtNi4zNi0xLjk1LTEwLjc4YzAtNS42OSwwLjk3LTguOTgsMi45OS0xMS45YzEuOC0yLjcsNC43Mi00LjEyLDcuNzgtNC4xMgoJCWM0Ljc5LDAsNy44NiwxLjgsOS42Niw0LjM0djIxLjYzQzU4OC43NiwzODQuMzYsNTg1LjM5LDM4Ni45OCw1ODAuMzcsMzg2Ljk4TDU4MC4zNywzODYuOTh6IE02MTkuOTcsMzkwLjY1CgkJYzQuNzksMCw4Ljc2LTEuNSwxMS45LTQuMTlsLTEuNjUtMi42MmMtMi41NSwyLjMyLTUuNjksMy4zNy05LjQzLDMuMzdjLTQuMTksMC03LjU2LTEuNjUtOS41OC00LjY0Yy0xLjQyLTIuMS0yLjQtNS4zMS0yLjQ3LTkuMjgKCQl2LTEuOTVoMjMuOTV2LTAuODJjMC04LjM4LTEuNDItMTEuOS00LjI3LTE0Ljg5Yy0yLjI1LTIuMjUtNS4zOS0zLjgyLTkuMzYtMy44MmMtNC41NywwLTguMDEsMi4wMi0xMC41NSw1LjAxCgkJYy0yLjk5LDMuNTItNC40Miw3Ljc4LTQuNDIsMTQuMTVDNjA0LjEsMzgyLjcyLDYwOS43MSwzOTAuNjUsNjE5Ljk3LDM5MC42NUw2MTkuOTcsMzkwLjY1eiBNNjA4Ljc0LDM2OC4yNwoJCWMwLjM3LTguODMsNC40OS0xMy4yNSwxMC4xLTEzLjI1YzMuNDQsMCw2LjE0LDEuNjUsNy41NiwzLjk3YzEuMiwxLjk1LDEuOTUsNC43OSwxLjk1LDkuMjhINjA4Ljc0TDYwOC43NCwzNjguMjd6IE02NDIuMDUsMzg5LjkKCQloNC4wNHYtMjQuNjNjMC0yLjk5LDAuNi00LjM0LDIuNTQtNi4yOWMxLjk1LTEuOTUsNC4xOS0yLjg0LDYuNTEtMi44NGMwLjYsMCwxLjI3LDAuMTUsMS42NSwwLjNsMS42NS00LjM0CgkJYy0wLjA4LTAuMDctMS4wNS0wLjM3LTIuMDItMC4zN2MtMi4xLDAtNC4xOSwwLjY3LTYuMzYsMi4zMmMtMS41NywxLjEyLTIuOTksMi42Mi00LjA0LDQuMTljMC4xNS0zLjgyLTAuOS01LjkxLTEuMTItNi4yOQoJCWwtNC4wNCwxLjA1YzAuMjIsMC40NSwxLjIsMi41NSwxLjIsNy40OVYzODkuOUw2NDIuMDUsMzg5Ljl6IE02NjkuNjcsMzkwLjJoMy44Mmw4LjAxLTI5LjEyYzAuMy0wLjk3LDAuNjctMi43NywwLjc1LTMuMjJoMC4xNQoJCWMwLjA3LDAuMywwLjQ1LDEuODcsMC45LDMuNDRsOC4wMSwyOC44OWg0LjA0bDEwLjQ4LTM3LjU3aC00LjI3bC03LjExLDI3Ljk5Yy0wLjM3LDEuNDItMC42NywyLjg0LTAuOTcsNC4yN2gtMC4xNWwtMS4yLTQuNDkKCQlsLTcuNDEtMjcuNzdoLTQuMzRsLTcuNDgsMjcuNjljLTAuNTIsMS44Ny0wLjk3LDMuODktMS4wNSw0LjM0aC0wLjIyYy0wLjA3LTAuNDUtMC41Mi0yLjYyLTEuMTItNC45NGwtNy4xOS0yNy43N2wtNC4wNCwwLjgyCgkJTDY2OS42NywzOTAuMkw2NjkuNjcsMzkwLjJ6IE03MTQuMzUsMzQ0LjE3YzEuOCwwLDMuMjktMS41LDMuMjktMy4yOWMwLTEuODctMS41LTMuMjktMy4yOS0zLjI5Yy0xLjgsMC0zLjI5LDEuNS0zLjI5LDMuMjkKCQlDNzExLjA2LDM0Mi42Nyw3MTIuNTUsMzQ0LjE3LDcxNC4zNSwzNDQuMTdMNzE0LjM1LDM0NC4xN3ogTTcxMi4xOCwzODkuOWg0LjE5di0zNy45NWwtNC4xOSwwLjY3VjM4OS45TDcxMi4xOCwzODkuOXoKCQkgTTcyNS4yLDQwNC41N2MyLjg0LTEuMjcsNS4yNC0zLjA3LDYuNjYtNi4xNGMwLjgyLTEuOTUsMS4wNS01LjAxLDEuMDUtOC4yM3YtMzguMzJsLTQuMTIsMC44MnYzNy4wNWMwLDYuNDQtMC40NSw5Ljg4LTUuNTQsMTIuMDUKCQlMNzI1LjIsNDA0LjU3TDcyNS4yLDQwNC41N3ogTTczMC44OSwzNDQuMTdjMS44LDAsMy4yMi0xLjUsMy4yMi0zLjI5YzAtMS44Ny0xLjQyLTMuMjktMy4yMi0zLjI5Yy0xLjg3LDAtMy4yOSwxLjQyLTMuMjksMy4yOQoJCUM3MjcuNiwzNDIuNjcsNzI5LjAyLDM0NC4xNyw3MzAuODksMzQ0LjE3TDczMC44OSwzNDQuMTd6IE03NTMuOTUsMzkwLjhjOC4wMSwwLDEzLjE3LTQuNzIsMTMuMTctMTEuNTMKCQljMC01LjA5LTIuNzctOC42MS05LjU4LTEwLjAzbC00Ljc5LTAuOTdjLTQuMTktMC45LTYuMjEtMi44NC02LjIxLTYuNDRjMC00LjA0LDIuOTItNy4wNCw4LjA4LTcuMDRjMy4zNywwLDYuMzYsMS4xMiw5LjEzLDIuNwoJCWwxLjY1LTIuOTljLTIuODQtMS44LTYuNjYtMi45Mi0xMC42My0yLjkyYy03LjYzLDAtMTIuNDIsNC40OS0xMi40MiwxMC43YzAsNS4yNCwzLjI5LDguNjEsOS4wNiw5LjhsNC42NCwwLjkKCQljNS4wMSwxLjA1LDYuODEsMy41Miw2LjgxLDcuMDRjMCw0LjQ5LTMuMjksNy41Ni04LjY4LDcuNTZjLTQuMjcsMC04LjIzLTEuMi0xMS42LTMuMzdsLTEuNTcsMi45OQoJCUM3NDQuNDQsMzg5LjQ1LDc0OS4yMywzOTAuOCw3NTMuOTUsMzkwLjhMNzUzLjk1LDM5MC44eiIvPgoJPHBhdGggZmlsbD0iI0ZGRkZGRiIgZD0iTTgzLjYxLDI4My41bC0zLjI1LTQuMDljLTQuNjEsMy4zNS05LjEyLDUuMDMtMTQuNTcsNS4wM2MtOC4wNywwLTE1LjA5LTMuNjctMTkuMjgtMTIuMjYKCQljLTIuMzEtNC42MS0zLjY3LTEwLjU4LTMuNjctMTguNzZjMC05LjAxLDEuNTctMTYuMTQsMy45OC0yMS4yN2MzLjY3LTcuNjUsOS45Ni0xMS43NCwxOC4wMi0xMS43NGM1LjU1LDAsOS43NSwxLjM2LDE0LjE1LDQuNzIKCQlsMy4xNC0zLjg4Yy00LjgyLTMuNzctMTAuNDgtNS42Ni0xNy4xOS01LjY2Yy05LjMzLDAtMTcuMDgsNC42MS0yMi4xMSwxMi4zN2MtMy45OCw2LjE4LTYuMzksMTQuOTgtNi4zOSwyNC42MwoJCWMwLDEwLjY5LDIuNTEsMjAuNDMsNy44NiwyNi45M2M1Ljc2LDcuMDIsMTIuNjgsOS44NSwyMC42NCw5Ljg1QzcxLjU2LDI4OS4zNyw3OC4xNywyODcuMjcsODMuNjEsMjgzLjVMODMuNjEsMjgzLjV6CgkJIE0xMTIuMTgsMjg4LjMyaDUuOTdsMjQuNTItNzEuODloLTYuMDhsLTE3LjQsNTIuNmMtMS45OSw1Ljg3LTMuNTYsMTEtMy44OCwxMi4zN2MtMC40Mi0xLjc4LTIuMS04LjE3LTMuNjctMTMuMWwtMTcuMDgtNTEuODcKCQloLTYuNUwxMTIuMTgsMjg4LjMyTDExMi4xOCwyODguMzJ6IE0xNzMuNjEsMjg5LjQ3YzkuMDEsMCwxNC42Ny0zLjg4LDE5LjA3LTguOTFjNS43Ni02LjM5LDguNy0xNC44OCw4LjctMjcuMzUKCQljMC0xMS4xMS0yLjEtMTkuNDktNi4wOC0yNS43OGMtMy4yNS01LjI0LTkuNjQtMTIuMDUtMjEuOS0xMi4wNWMtMTAuMDYsMC0xNi44Nyw0LjgyLTIxLjA2LDExLjExYy00LjA5LDYuMDgtNi42LDE0Ljg4LTYuNiwyNS43OAoJCWMwLDExLjQyLDIuNzIsMjAuNjQsNy40NCwyNi44M0MxNTcuMjYsMjg0LjY1LDE2My43NiwyODkuNDcsMTczLjYxLDI4OS40N0wxNzMuNjEsMjg5LjQ3eiBNMTczLjkzLDI4NC44NgoJCWMtNy44NiwwLTE0LjE1LTQuNTEtMTYuODctOS4zM2MtMi44My01LjI0LTQuNzItMTMuOTQtNC43Mi0yNC40MmMwLTkuMzMsMS40Ny0xNi4wMyw0LjA5LTIxLjE3YzIuNzItNS4xMyw4LjU5LTkuNzUsMTYuOTgtOS43NQoJCWM5LjQzLDAsMTQuNzgsNS40NSwxNy4yOSwxMC42OWMyLjYyLDUuMzQsMy45OCwxMi43OCwzLjk4LDIzLjE2YzAsMTEuMjEtMS43OCwxNy41LTUuMTMsMjIuNTMKCQlDMTg2LjUsMjgwLjk4LDE4MS43OSwyODQuODYsMTczLjkzLDI4NC44NkwxNzMuOTMsMjg0Ljg2eiBNMjkzLjA0LDI4OS44MmM5Ljg4LDAsMjAuMDYtMi42OSwyNy4zOS03LjM0di00Ni41NkgyODcuMmwxLjY1LDcuMDQKCQloMjMuNXYzNS4wM2MtNC45NCwzLjE0LTExLjY4LDQuNjQtMTguNTYsNC42NGMtMTAuNDgsMC0yMC45Ni00LjE5LTI2LjUtMTIuMjhjLTQuNjQtNi44OS03LjY0LTE4Ljg2LTcuNjQtMzIuNzgKCQljMC0xMS4yMywxLjk1LTIwLjY2LDUuNTQtMjkuMzRjNC40OS0xMC43OCwxNC4yMi0xNi43NywyNS45LTE2Ljc3YzguMzgsMCwxNC45NywyLjI1LDIyLjc1LDcuNjNsMy43NC01LjM5CgkJYy03LjM0LTYuMTQtMTYuMTctOS4xMy0yNi42NS05LjEzYy0xMS4yMywwLTIwLjIxLDQuMTktMjcuMjQsMTEuOThjLTguOTgsOS44OC0xMy4xNywyMi45LTEzLjE3LDQwLjcyCgkJYzAsMTYuNzcsMy44OSwyOS43OSwxMS4yMywzOC43N0MyNjkuNTQsMjg1LjQ3LDI4MC4zMSwyODkuODIsMjkzLjA0LDI4OS44MkwyOTMuMDQsMjg5LjgyeiBNMzQwLjg0LDI4OC4zMmg4LjA4di00OS4yNQoJCWMwLTUuOTksMS4yLTguNjgsNS4wOS0xMi41N2MzLjg5LTMuODksOC4zOC01LjY5LDEzLjAyLTUuNjljMS4yLDAsMi41NSwwLjMsMy4yOSwwLjZsMy4yOS04LjY4Yy0wLjE1LTAuMTUtMi4xLTAuNzUtNC4wNC0wLjc1CgkJYy00LjE5LDAtOC4zOCwxLjM1LTEyLjczLDQuNjRjLTMuMTQsMi4yNS01Ljk5LDUuMjQtOC4wOCw4LjM4YzAuMy03LjYzLTEuOC0xMS44My0yLjI1LTEyLjU3bC04LjA4LDIuMQoJCWMwLjQ1LDAuOSwyLjQsNS4wOSwyLjQsMTQuOTdWMjg4LjMyTDM0MC44NCwyODguMzJ6IE00MDcuODYsMjg5Ljk3YzExLjY4LDAsMjAuMzYtNS42OSwyNS0xMy45MmMzLjU5LTYuMTQsNS42OS0xNC4wNyw1LjY5LTI0LjI1CgkJYzAtMTEuODMtMi4yNS0yMC41MS02LjU5LTI3LjFjLTQuMzQtNi41OS0xMi4xMy0xMi43Mi0yNC40LTEyLjcyYy0xMC40OCwwLTE4LjI2LDQuNzktMjIuOSwxMC45MwoJCWMtNC45NCw2LjU5LTcuNzgsMTYuMzItNy43OCwyNy44NGMwLDExLjIzLDIuNCwyMC4wNiw2Ljg5LDI2LjhDMzg4LjQsMjg0LjU4LDM5Ni4zMywyODkuOTcsNDA3Ljg2LDI4OS45N0w0MDcuODYsMjg5Ljk3egoJCSBNNDA4LjAxLDI4My4yM2MtOC4wOCwwLTE0LjM3LTQuMzQtMTcuMjItOC45OGMtMy4xNC01LjA5LTUuMDktMTQuMDctNS4wOS0yNC43YzAtOS4yOCwxLjY1LTE2LjQ3LDQuNDktMjEuNTYKCQljMi43LTQuOTQsOC45OC05LjI4LDE3LjIyLTkuMjhjNy45MywwLDE0LjY3LDQuMTksMTcuNjYsMTAuMThjMi44NCw1LjM5LDQuMzQsMTIuODcsNC4zNCwyMy41YzAsOC42OC0wLjksMTMuMzItMy41OSwxOS40NgoJCUM0MjIuOTgsMjc4LjI5LDQxNi45OSwyODMuMjMsNDA4LjAxLDI4My4yM0w0MDguMDEsMjgzLjIzeiBNNDgzLjc1LDI4OS44MmM5LjU4LDAsMTcuNTItMi45OSwyMy44LTguMzhsLTMuMjktNS4yNAoJCWMtNS4wOSw0LjY0LTExLjM4LDYuNzQtMTguODYsNi43NGMtOC4zOCwwLTE1LjEyLTMuMjktMTkuMTYtOS4yOGMtMi44NC00LjE5LTQuNzktMTAuNjMtNC45NC0xOC41NnYtMy44OWg0Ny45di0xLjY1CgkJYzAtMTYuNzctMi44NC0yMy44LTguNTMtMjkuNzljLTQuNDktNC40OS0xMC43OC03LjYzLTE4LjcxLTcuNjNjLTkuMTMsMC0xNi4wMiw0LjA0LTIxLjExLDEwLjAzYy01Ljk5LDcuMDQtOC44MywxNS41Ny04LjgzLDI4LjI5CgkJQzQ1Mi4wMiwyNzMuOTUsNDYzLjI1LDI4OS44Miw0ODMuNzUsMjg5LjgyTDQ4My43NSwyODkuODJ6IE00NjEuMywyNDUuMDZjMC43NS0xNy42Niw4Ljk4LTI2LjUsMjAuMjEtMjYuNQoJCWM2Ljg5LDAsMTIuMjgsMy4yOSwxNS4xMiw3LjkzYzIuNCwzLjg5LDMuODksOS41OCwzLjg5LDE4LjU2SDQ2MS4zTDQ2MS4zLDI0NS4wNnogTTUyOS40NiwxOTYuODVjMy41OSwwLDYuNTktMi45OSw2LjU5LTYuNTkKCQljMC0zLjc0LTIuOTktNi41OS02LjU5LTYuNTljLTMuNTksMC02LjU5LDIuOTktNi41OSw2LjU5UzUyNS44NiwxOTYuODUsNTI5LjQ2LDE5Ni44NUw1MjkuNDYsMTk2Ljg1eiBNNTI1LjEyLDI4OC4zMmg4LjM4di03NS45CgkJbC04LjM4LDEuMzVWMjg4LjMyTDUyNS4xMiwyODguMzJ6IE01NTQuNywzMTkuMTZsOC4wOC0xLjY1di0zNi44M2M1LjA5LDUuODQsMTMuMDIsOS4yOCwyMC42Niw5LjI4YzkuNzMsMCwxNy41MS00Ljc5LDIyLjktMTMuNDcKCQljMy43NC02LjE0LDUuODQtMTMuNzcsNS44NC0yNS43NWMwLTEzLjMyLTIuNTUtMjIuMzEtOC4wOC0yOS4xOWMtNC43OS01Ljk5LTEyLjEzLTkuMTMtMTkuNjEtOS4xM2MtOC41MywwLTE2LjMyLDQuMDQtMjIuMTYsMTEuMjMKCQljMC03LjM0LTAuNzUtMTAuNjMtMS4wNS0xMS4yM2wtOC4zOCwxLjVjMC40NSwwLjc1LDEuOCw0Ljc5LDEuOCwxNC45N1YzMTkuMTZMNTU0LjcsMzE5LjE2eiBNNTgyLjA5LDI4My4yMwoJCWMtNi43NCwwLTE0LjA3LTMuNTktMTkuMzEtMTAuMzN2LTQyLjA3YzUuNjktNy4zNCwxMy4wMi0xMS4wOCwyMC44MS0xMS4wOGM2LjE0LDAsMTIuMTMsMi45OSwxNS4yNyw4LjIzCgkJYzIuOTksNS4wOSw0Ljc5LDEzLjYyLDQuNzksMjMuNjVjMCw5LjQzLTEuNjUsMTYuNDctNC4wNCwyMS4yNkM1OTYuMzEsMjc5LjE5LDU4OS43MywyODMuMjMsNTgyLjA5LDI4My4yM0w1ODIuMDksMjgzLjIzegoJCSBNNjc5LjU2LDI5MC43MWw1LjM5LTUuMzljLTIuODQtMy4xNC00LjA0LTYuNTktNC4wNC0xNS41N3YtNTYuODlsLTguMDgsMS4zNXY1NS42OWMtNS4wOSw4LjUzLTEzLjE3LDEzLjQ3LTIwLjk2LDEzLjQ3CgkJYy00LjA0LDAtNy43OC0xLjM1LTEwLjE4LTMuMjljLTMuMjktMi41NC00LjY0LTYuMjktNC42NC0xMi43MnYtNTQuNzlsLTcuOTMsMS42NXY1NS41NGMwLDQuNzksMS4wNSw4Ljk4LDIuOTksMTEuODMKCQljMi44NCw1LjI0LDguODMsOC42OCwxNy41MSw4LjY4YzkuODgsMCwxOC4xMS00LjE5LDIzLjk1LTExLjgzQzY3NC4zMiwyODQuMjgsNjc1Ljk3LDI4Ny40Miw2NzkuNTYsMjkwLjcxTDY3OS41NiwyOTAuNzF6CgkJIE03MDIuNjMsMjg4LjMyaDcuOTN2LTU3LjM0YzUuOTktNi44OSwxNS4yNy0xMS41MywyMi4wMS0xMS41M2M0LjE5LDAsNy43OSwxLjUsOS43MywzLjU5YzIuMjUsMi44NCwzLjQ0LDUuNjksMy40NCwxMi43MnY1Mi41NAoJCWg4LjA4di01Ni43NGMwLTMuODktMS4wNS03LjQ5LTIuODQtMTAuMzNjLTIuODQtNS4yNC04Ljk4LTguODMtMTYuNjItOC44M2MtOC41MywwLTE2LjYyLDQuMTktMjMuOTUsMTEuOTgKCQljMC02LjU5LTIuMS0xMS4yMy0yLjQtMTEuODNsLTcuOTMsMi4xYzEuMDUsMi41NCwyLjU0LDYuNTksMi41NCwxNC44MlYyODguMzJMNzAyLjYzLDI4OC4zMnogTTc5MC43NCwyOTAuMjcKCQljNC43OSwwLDguMzgtMC45LDExLjY4LTIuNTVsLTEuMi01LjM5Yy0yLjEsMS4wNS00LjM0LDEuNjUtNy43OCwxLjY1Yy03LjQ5LDAtMTAuMDMtNC4wNC0xMC4wMy0xMi4yOHYtNTEuOGgxNi4xN2wyLjU1LTYuMTRINzgzLjcKCQljMC05Ljg4LDEuMi0xOS40NiwxLjY1LTIwLjk2bC04LjY4LDEuOGMtMC4zLDEuNjUtMS4yLDExLjUzLTEuMiwxOS4xNmgtOS43M3Y2LjE0aDkuNzN2NTMuODljMCw2Ljg5LDEuOCwxMS4zOCw1Ljg0LDEzLjc3CgkJQzc4My43LDI4OS4wNyw3ODYuNTUsMjkwLjI3LDc5MC43NCwyOTAuMjdMNzkwLjc0LDI5MC4yN3oiLz4KPC9nPgo8L3N2Zz4K" alt="cvo Groeipunt" />
+    <div class="start-app-block">
+      <svg width="44" height="44" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M32 4L58 18V46L32 60L6 46V18L32 4Z" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+        <path d="M32 14L50 24V44L32 54L14 44V24L32 14Z" fill="rgba(255,255,255,0.07)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+        <path d="M22 32L28 38L42 26" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="start-app-title">Claudine Meter</div>
+      <div class="start-app-sub">Competenties evalueren</div>
+    </div>
+    <div class="start-divider"></div>
+    <div class="start-prompt">Wie ben je vandaag?</div>
+    <div class="start-btns">
+      <button class="start-btn start-btn-primary" onclick="startAsTeacher()">Ik ben een leerkracht</button>
+      <button class="start-btn start-btn-outline" onclick="startAsStudent()">Ik ben een cursist</button>
+    </div>
+  </div>
+
   <!-- Role picker modal -->
   <div class="modal-backdrop" id="role-modal">
     <div class="modal" style="width:380px;max-width:95vw;text-align:center">
@@ -500,7 +564,7 @@ textarea:focus { border-color: #888; }
       <div id="student-login-result" class="settings-result" style="margin-top:8px"></div>
       <div style="display:flex;gap:8px;margin-top:1rem">
         <button onclick="studentLogin()" style="flex:1;font-weight:500">View my results</button>
-        <button onclick="backToRolePicker()" class="modal-close" style="flex:1">Back</button>
+        <button onclick="backToRolePicker()" class="modal-close" style="flex:1">Terug</button>
       </div>
     </div>
   </div>
@@ -524,10 +588,15 @@ textarea:focus { border-color: #888; }
   <!-- PDF student picker modal -->
   <div class="modal-backdrop" id="pdf-modal" onclick="if(event.target===this)closePdfModal()">
     <div class="modal">
-      <h3>Generate PDF report</h3>
-      <p>Choose a student to download their full evaluation as a PDF.</p>
+      <h3>PDF-rapport genereren</h3>
+      <p style="margin-bottom:0.75rem">Kies een cursist om hun rapport te downloaden, of exporteer de hele klas als zip-bestand.</p>
+      <button onclick="generateClassZip()" id="btn-class-zip"
+        style="width:100%;margin-bottom:1rem;font-weight:500;background:#E1F5EE;border-color:#5DCAA5;color:#0F6E56;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px">
+        <span>📦</span> Hele klas downloaden (zip)
+      </button>
+      <div style="font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px">Of kies één cursist</div>
       <div class="modal-btns" id="pdf-student-list"></div>
-      <button class="modal-close" onclick="closePdfModal()">Cancel</button>
+      <button class="modal-close" onclick="closePdfModal()">Annuleren</button>
     </div>
   </div>
 
@@ -544,16 +613,16 @@ textarea:focus { border-color: #888; }
         onclick="openClassModal()" style="cursor:pointer">
         <span class="sync-dot"></span><span id="sync-label">Loading…</span>
       </span>
-      <button id="btn-manage" onclick="openManageEntryModal()">Manage criteria</button>
+      <button id="btn-manage" onclick="openManageEntryModal()">Criteria aanpassen</button>
       <button id="btn-sa-toggle" onclick="toggleSaColumn()" title="Show student self-assessment column">Self-assessment</button>
       <button id="btn-lock" onclick="lockTeacher()" title="Lock — requires password to re-enter" style="padding:5px 8px">🔒</button>
-      <button onclick="openShortcutHelp()" title="Keyboard shortcuts" style="padding:5px 8px">?</button>
+      <button onclick="openShortcutHelp()" title="Sneltoetsen" style="padding:5px 8px">?</button>
     </div>
 
   <!-- Manage criteria entry modal -->
   <div class="modal-backdrop" id="manage-entry-modal" onclick="if(event.target===this)closeManageEntryModal()">
     <div class="modal" style="width:380px;max-width:95vw;text-align:center">
-      <h3 style="margin-bottom:6px">Manage criteria</h3>
+      <h3 style="margin-bottom:6px">Criteria aanpassen</h3>
       <p style="font-size:13px;color:var(--text2);margin-bottom:1.5rem;line-height:1.6">How would you like to set up the criteria for this class?</p>
       <div style="display:flex;flex-direction:column;gap:10px">
         <button onclick="_lastManageChoice='import';closeManageEntryModal();openImportCriteriaModal()" style="padding:12px;font-size:14px;border-radius:var(--r-md);text-align:left;display:flex;align-items:center;gap:10px">
@@ -594,15 +663,15 @@ textarea:focus { border-color: #888; }
 
       <!-- Step 1: class code -->
       <div id="wizard-step-code">
-        <h3 style="margin-bottom:4px">Teacher login</h3>
-        <p style="margin-bottom:1.25rem;color:var(--text2);font-size:13px;line-height:1.6">Enter your class code to continue.</p>
-        <div class="settings-label" style="margin-bottom:6px">Class code</div>
+        <h3 style="margin-bottom:4px">Leerkracht login</h3>
+        <p style="margin-bottom:1.25rem;color:var(--text2);font-size:13px;line-height:1.6">Vul de klascode in om verder te gaan.</p>
+        <div class="settings-label" style="margin-bottom:6px">Klascode</div>
         <div style="display:flex;gap:8px">
           <input class="settings-input" id="wizard-classname" type="text" placeholder="e.g. GELGERE02ALOLCRLHFlFl01SA" style="flex:1" onkeydown="if(event.key==='Enter')wizardCheckCode()" />
-          <button onclick="wizardCheckCode()" style="white-space:nowrap;font-weight:500">Next</button>
+          <button onclick="wizardCheckCode()" style="white-space:nowrap;font-weight:500">Volgende</button>
         </div>
         <div id="wizard-result" class="settings-result" style="margin-top:8px"></div>
-        <button onclick="backToRolePicker()" class="modal-close" style="margin-top:10px;width:100%">Back</button>
+        <button onclick="backToRolePicker()" class="modal-close" style="margin-top:10px;width:100%">Terug</button>
       </div>
 
       <!-- Step 2a: enter existing password -->
@@ -614,22 +683,26 @@ textarea:focus { border-color: #888; }
         <div id="wizard-login-result" class="settings-result" style="margin-top:8px"></div>
         <div style="display:flex;gap:8px;margin-top:10px">
           <button onclick="wizardDoLogin()" style="flex:1;font-weight:500">Open class</button>
-          <button onclick="wizardBackToCode()" class="modal-close" style="flex:1">Back</button>
+          <button onclick="wizardBackToCode()" class="modal-close" style="flex:1">Terug</button>
         </div>
       </div>
 
       <!-- Step 2b: set new password -->
       <div id="wizard-step-new" style="display:none">
-        <h3 style="margin-bottom:4px">Create a password</h3>
-        <p style="margin-bottom:1.25rem;color:var(--text2);font-size:13px;line-height:1.6">New class! Set a password. Share it only with your colleagues who teach this class.</p>
-        <div class="settings-label" style="margin-bottom:6px">Password</div>
-        <input class="settings-input" id="wizard-pwd-new" type="password" placeholder="Choose a password" style="margin-bottom:8px" />
-        <div class="settings-label" style="margin-bottom:6px">Confirm password</div>
-        <input class="settings-input" id="wizard-pwd-confirm" type="password" placeholder="Repeat password" onkeydown="if(event.key==='Enter')wizardCreateClass()" />
+        <h3 style="margin-bottom:4px">Kies een wachtwoord voor je klas</h3>
+        <p style="margin-bottom:1.25rem;color:var(--text2);font-size:13px;line-height:1.6">
+          Je klas wordt aangemaakt. Kies een wachtwoord dat je goed kan onthouden.
+          Alleen leerkrachten van deze klas hebben dit wachtwoord nodig om in te loggen.
+          Deel het niet met cursisten.
+        </p>
+        <div class="settings-label" style="margin-bottom:6px">Kies een wachtwoord</div>
+        <input class="settings-input" id="wizard-pwd-new" type="password" placeholder="Typ hier je gekozen wachtwoord" style="margin-bottom:8px" />
+        <div class="settings-label" style="margin-bottom:6px">Bevestig je wachtwoord</div>
+        <input class="settings-input" id="wizard-pwd-confirm" type="password" placeholder="Typ je wachtwoord nogmaals ter bevestiging" onkeydown="if(event.key==='Enter')wizardCreateClass()" />
         <div id="wizard-new-result" class="settings-result" style="margin-top:8px"></div>
         <div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="wizardCreateClass()" style="flex:1;font-weight:500">Create class</button>
-          <button onclick="wizardBackToCode()" class="modal-close" style="flex:1">Back</button>
+          <button onclick="wizardCreateClass()" style="flex:1;font-weight:500">Opslaan en klas aanmaken</button>
+          <button onclick="wizardBackToCode()" class="modal-close" style="flex:1">Terug</button>
         </div>
       </div>
 
@@ -639,25 +712,39 @@ textarea:focus { border-color: #888; }
   <!-- Keyboard shortcuts help modal -->
   <div class="modal-backdrop" id="shortcut-modal" onclick="if(event.target===this)closeShortcutHelp()">
     <div class="modal" style="width:420px;max-width:95vw">
-      <h3 style="margin-bottom:1rem">Keyboard shortcuts</h3>
+      <h3 style="margin-bottom:1rem">Sneltoetsen</h3>
       <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:13px;align-items:center">
         <kbd style="font-family:monospace;background:var(--bg2);border:0.5px solid var(--border2);border-radius:4px;padding:2px 7px;font-size:12px;white-space:nowrap">1 2 3 4</kbd>
-        <span style="color:var(--text2)">Set score for focused subcriterion (1=Not achieved … 4=Flying colours)</span>
+        <span style="color:var(--text2)">Score instellen (1=Niet behaald … 4=Uitmuntend behaald)</span>
         <kbd style="font-family:monospace;background:var(--bg2);border:0.5px solid var(--border2);border-radius:4px;padding:2px 7px;font-size:12px">Tab</kbd>
-        <span style="color:var(--text2)">Move to next subcriterion</span>
+        <span style="color:var(--text2)">Naar volgend succescriteria</span>
         <kbd style="font-family:monospace;background:var(--bg2);border:0.5px solid var(--border2);border-radius:4px;padding:2px 7px;font-size:12px;white-space:nowrap">Shift+Tab</kbd>
-        <span style="color:var(--text2)">Move to previous subcriterion</span>
+        <span style="color:var(--text2)">Naar vorig succescriteria</span>
         <kbd style="font-family:monospace;background:var(--bg2);border:0.5px solid var(--border2);border-radius:4px;padding:2px 7px;font-size:12px;white-space:nowrap">← →</kbd>
-        <span style="color:var(--text2)">Switch between students</span>
+        <span style="color:var(--text2)">Tussen cursisten wisselen</span>
         <kbd style="font-family:monospace;background:var(--bg2);border:0.5px solid var(--border2);border-radius:4px;padding:2px 7px;font-size:12px;white-space:nowrap">↑ ↓</kbd>
-        <span style="color:var(--text2)">Move between criteria</span>
+        <span style="color:var(--text2)">Tussen competenties wisselen</span>
         <kbd style="font-family:monospace;background:var(--bg2);border:0.5px solid var(--border2);border-radius:4px;padding:2px 7px;font-size:12px">?</kbd>
-        <span style="color:var(--text2)">Show / hide this help</span>
+        <span style="color:var(--text2)">Hulp tonen / verbergen</span>
         <kbd style="font-family:monospace;background:var(--bg2);border:0.5px solid var(--border2);border-radius:4px;padding:2px 7px;font-size:12px">Esc</kbd>
-        <span style="color:var(--text2)">Close any open modal</span>
+        <span style="color:var(--text2)">Elk venster sluiten</span>
       </div>
-      <p style="font-size:11px;color:var(--text3);margin-top:1rem;line-height:1.5">Shortcuts are disabled when typing in a text field or note. The focused subcriterion is highlighted in blue.</p>
-      <button onclick="closeShortcutHelp()" class="modal-close" style="margin-top:1rem;width:100%">Close</button>
+      <p style="font-size:11px;color:var(--text3);margin-top:1rem;line-height:1.5">Sneltoetsen zijn uitgeschakeld bij het typen in een tekstveld. Het gefocuste succescriteria is blauw gemarkeerd.</p>
+      <div style="display:flex;gap:8px;margin-top:1rem">
+        <button onclick="closeShortcutHelp();openFaq()" style="flex:1;font-weight:500">Veelgestelde vragen</button>
+        <button onclick="closeShortcutHelp()" class="modal-close" style="flex:1">Sluiten</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ modal -->
+  <div class="modal-backdrop" id="faq-modal" onclick="if(event.target===this)closeFaq()">
+    <div class="modal" style="width:560px;max-width:96vw;max-height:88vh;overflow-y:auto">
+      <h3 style="margin-bottom:1.25rem">Veelgestelde vragen</h3>
+
+      <div id="faq-list"></div>
+
+      <button onclick="closeFaq()" class="modal-close" style="margin-top:1.25rem;width:100%">Sluiten</button>
     </div>
   </div>
 
@@ -680,7 +767,7 @@ textarea:focus { border-color: #888; }
     <div class="modal" style="width:380px;max-width:95vw">
       <h3 style="margin-bottom:4px">Switch class</h3>
       <p style="margin-bottom:1.25rem;color:var(--text2);font-size:13px;line-height:1.6">Type the class code to open it. Currently active: <strong id="current-class-label">—</strong></p>
-      <div class="settings-label" style="margin-bottom:6px">Class code</div>
+      <div class="settings-label" style="margin-bottom:6px">Klascode</div>
       <div style="display:flex;gap:8px">
         <input class="settings-input" id="switch-classname" type="text" placeholder="e.g. GELGERE02ALOLCRLHFlFl01SA" style="flex:1" onkeydown="if(event.key==='Enter')switchClassByName()" />
         <button onclick="switchClassByName()" style="font-weight:500;white-space:nowrap">Open</button>
@@ -727,7 +814,7 @@ textarea:focus { border-color: #888; }
       <div style="margin-top:1rem;border-top:0.5px solid var(--border);padding-top:1rem">
         <div style="font-size:11px;font-weight:500;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em">Reset teacher password</div>
         <p style="font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.5">Use this when a teacher has forgotten their password. Enter their class code and set a new password.</p>
-        <div class="settings-label" style="margin-bottom:4px">Class code</div>
+        <div class="settings-label" style="margin-bottom:4px">Klascode</div>
         <input class="settings-input" id="reset-pwd-class" type="text" placeholder="e.g. GELGERE02ALOLCRLHFlFl01SA" style="margin-bottom:8px" />
         <div class="settings-label" style="margin-bottom:4px">New password</div>
         <input class="settings-input" id="reset-pwd-new" type="password" placeholder="New password (min. 4 characters)" style="margin-bottom:8px" />
@@ -755,33 +842,32 @@ textarea:focus { border-color: #888; }
       <textarea id="import-textarea" placeholder="Jan Janssen&#10;Marie Dupont&#10;Ahmed El Fassi" style="min-height:140px;margin-bottom:0.75rem;font-size:13px" oninput="previewImport()"></textarea>
       <div id="import-preview" style="margin-bottom:0.75rem"></div>
       <div style="display:flex;gap:8px">
-        <button onclick="confirmImport()" id="import-confirm-btn" style="flex:1;font-weight:500" disabled>Add students</button>
+        <button onclick="confirmImport()" id="import-confirm-btn" style="flex:1;font-weight:500" disabled>Cursisten toevoegen</button>
         <button onclick="closeImportModal()" class="modal-close" style="flex:1">Cancel</button>
       </div>
     </div>
   </div>
 
     <div class="edit-banner" id="manage-banner" style="background:#E6F1FB;border-color:#85B7EB;color:#185FA5">
-      <strong>Manage criteria</strong> — add, remove or rename criteria and subcriteria. Weight inputs are now editable.
+      <strong>Criteria aanpassen</strong> — add, remove or rename criteria and subcriteria. Weight inputs are now editable.
       <div style="flex:1"></div>
       <button onclick="exitManageMode();openImportCriteriaModal()" style="font-size:12px;padding:4px 10px;background:transparent;border-color:#85B7EB;color:#185FA5;margin-right:4px">Import</button>
       <button onclick="exitManageMode()" style="font-size:12px;padding:4px 10px">Done</button>
     </div>
 
     <div class="top-bar" style="margin-bottom:0.75rem">
-      <input type="text" id="name-input" placeholder="Add student…" style="width:165px" />
+      <input type="text" id="name-input" placeholder="Cursist toevoegen…" style="width:165px" />
       <button onclick="addStudent()">+ Add</button>
       <button onclick="openImportModal()">Import names</button>
     </div>
 
-    <div class="legend">
-      <div class="leg"><div class="leg-dot" style="background:#E24B4A"></div>Not achieved</div>
-      <div class="leg"><div class="leg-dot" style="background:#EF9F27"></div>Almost achieved</div>
-      <div class="leg"><div class="leg-dot" style="background:#1D9E75"></div>Achieved</div>
-      <div class="leg"><div class="leg-dot" style="background:#378ADD"></div>Achieved with flying colours</div>
-    </div>
 
-    <div class="tabs" id="tabs"></div>
+
+    <div class="tabs-wrap">
+      <button class="tabs-arrow" id="tabs-arrow-left" onclick="scrollTabs(-1)" disabled>&#8249;</button>
+      <div class="tabs" id="tabs"></div>
+      <button class="tabs-arrow" id="tabs-arrow-right" onclick="scrollTabs(1)">&#8250;</button>
+    </div>
     <div id="eval-legend" style="display:none;gap:10px;margin-bottom:6px;padding:0 2px">
       <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text3)">
         <span class="tab-dot full" style="display:inline-block"></span> All criteria evaluated
@@ -815,15 +901,16 @@ const DEFAULT_CRITERIA = [
     ]
   },
   ...Array.from({length:20}, (_,i) => ({
-    title: `Criterion ${i+2} — click to rename`,
+    title: `Competentie ${i+2} — klik om aan te passen`,
     subs: Array.from({length:4}, (_,j) => ({
       bloom: "",
-      text: `Subcriterion ${j+1} — click to edit`
+      text: `Succescriteria ${j+1} — click to edit`
     }))
   }))
 ];
 
-const LEVELS  = ["Not achieved","Almost achieved","Achieved","Achieved with flying colours"];
+const LEVELS       = ["Niet behaald","Bijna behaald","Behaald","Uitmuntend behaald"];
+const LEVELS_SHORT = ["Niet","Bijna","Behaald","Uitmuntend"];
 const DOT_CLR = ["#E24B4A","#EF9F27","#1D9E75","#378ADD"];
 const BG_CLR  = ["#FCEBEB","#FAEEDA","#E1F5EE","#E6F1FB"];
 const BD_CLR  = ["#F09595","#FAC775","#5DCAA5","#85B7EB"];
@@ -865,12 +952,11 @@ function setSessionAuthed()  { sessionStorage.setItem(SESSION_AUTH_KEY, "1"); }
 function clearSessionAuth()  { sessionStorage.removeItem(SESSION_AUTH_KEY); }
 
 function lockTeacher() {
-  if (!confirm("Lock Claudine Meter?\n\nYou'll need to enter your password again to get back in.")) return;
+  if (!confirm("Claudine Meter vergrendelen?\n\nJe zal je wachtwoord opnieuw moeten invoeren.")) return;
   clearSessionAuth();
-  // Keep localStorage intact (data stays) but show wizard again
   document.getElementById("student-overlay")?.classList.remove("open");
   exitManageMode();
-  showRolePicker();
+  showStartScreen();
 }
 
 /* ── Persistence ── */
@@ -891,7 +977,7 @@ function setWeight(ci,si,val) {
   scheduleSave(); render();
 }
 
-/* ── Weighted result for a criterion + student ──
+/* ── Weighted result for a competentie + student ──
    Returns { levelIndex, avg, weightedSum, totalWeight, evaluated }
    levelIndex is 0-3 (rounded), null if nothing evaluated            */
 function calcWeightedResult(name, ci) {
@@ -958,6 +1044,23 @@ function removeStudent(name) {
 }
 
 /* ── Scores ── */
+/* ── Tab scroll arrows ── */
+function scrollTabs(dir) {
+  const el = document.getElementById("tabs");
+  if (!el) return;
+  el.scrollBy({ left: dir * 200, behavior: "smooth" });
+  setTimeout(updateTabArrows, 300);
+}
+
+function updateTabArrows() {
+  const el   = document.getElementById("tabs");
+  const btnL = document.getElementById("tabs-arrow-left");
+  const btnR = document.getElementById("tabs-arrow-right");
+  if (!el || !btnL || !btnR) return;
+  btnL.disabled = el.scrollLeft <= 2;
+  btnR.disabled = el.scrollLeft + el.clientWidth >= el.scrollWidth - 2;
+}
+
 function getScore(name,ci,si) {
   if (!state.scores[name]||!state.scores[name][ci]) return null;
   const v = state.scores[name][ci][si];
@@ -1035,7 +1138,7 @@ function _swapCritData(fromCi, toCi) {
   const crit = getCriteria();
   [crit[fromCi], crit[toCi]] = [crit[toCi], crit[fromCi]];
 
-  // Remap per-criterion data for all students
+  // Remap per-competentie data for all students
   const remapForStudents = (obj) => {
     state.students.forEach(name => {
       if (!obj[name]) return;
@@ -1059,7 +1162,7 @@ function moveCriterion(ci, dir) {
   const to = ci + dir;
   if (to < 0 || to >= crit.length) return;
   _swapCritData(ci, to);
-  activeCrit = to; // follow the moved criterion
+  activeCrit = to; // follow the moved competentie
   scheduleSave(); render();
 }
 
@@ -1068,7 +1171,7 @@ function _swapSubData(ci, fromSi, toSi) {
   const subs = crit[ci].subs;
   [subs[fromSi], subs[toSi]] = [subs[toSi], subs[fromSi]];
 
-  // Remap scores and subNotes for this criterion
+  // Remap scores and subNotes for this competentie
   state.students.forEach(name => {
     const sc = state.scores[name]?.[ci];
     if (sc) { [sc[fromSi], sc[toSi]] = [sc[toSi], sc[fromSi]]; }
@@ -1170,7 +1273,7 @@ function _initSubDrag(ci) {
   });
 }
 
-/* ── Quick-fill criterion ── */
+/* ── Quick-fill competentie ── */
 function quickFill(ci, val, clearAll) {
   if (!activeStudent) return;
   const crit = getCrit(ci);
@@ -1195,7 +1298,7 @@ function quickFill(ci, val, clearAll) {
 }
 
 /* ── Keyboard shortcuts ── */
-let _kbFocusSi = 0; // currently focused subcriterion index
+let _kbFocusSi = 0; // currently focused succescriteria index
 
 function openShortcutHelp()  { document.getElementById("shortcut-modal").classList.add("open"); }
 function closeShortcutHelp() { document.getElementById("shortcut-modal").classList.remove("open"); }
@@ -1231,7 +1334,7 @@ function _kbScore(val) {
 document.addEventListener("keydown", e => {
   // Always: Esc closes any open modal
   if (e.key === "Escape") {
-    ["shortcut-modal","unsaved-modal","manage-entry-modal","import-criteria-modal",
+    ["shortcut-modal","faq-modal","unsaved-modal","manage-entry-modal","import-criteria-modal",
      "pdf-modal","class-modal","admin-modal","admin-login-modal","import-modal"].forEach(id => {
       document.getElementById(id)?.classList.remove("open");
     });
@@ -1249,7 +1352,7 @@ document.addEventListener("keydown", e => {
   // Don't fire if modifier keys are held (browser shortcuts)
   if (e.ctrlKey || e.metaKey || e.altKey) return;
 
-  // Only active on criterion pages with a student selected
+  // Only active on competentie pages with a student selected
   if (activeCrit === 21 || !activeStudent) return;
 
   switch(e.key) {
@@ -1290,13 +1393,7 @@ document.addEventListener("keydown", e => {
   }
 });
 
-// Set initial focus after every render
-const _origRender = render;
-function render() {
-  _origRender();
-  // Restore kb focus after re-render
-  requestAnimationFrame(() => _kbSetFocus(_kbFocusSi));
-}
+// Kb focus restored in render()
 
 /* ── Manage criteria mode (unified with edit) ── */
 let _lastManageChoice = null; // remembered per session: 'manual' | 'import' | null
@@ -1370,7 +1467,7 @@ function enterManageMode() {
   document.getElementById("manage-banner").classList.add("visible");
   const btn = document.getElementById("btn-manage");
   btn.classList.add("edit-active");
-  btn.textContent = "Done managing";
+  btn.textContent = "Criteria aanpassen";
   render();
 }
 function exitManageMode() {
@@ -1378,7 +1475,7 @@ function exitManageMode() {
   document.getElementById("manage-banner").classList.remove("visible");
   const btn = document.getElementById("btn-manage");
   btn.classList.remove("edit-active");
-  btn.textContent = "Manage criteria";
+  btn.textContent = "Criteria aanpassen";
   render();
 }
 // Keep toggleManageMode as alias for compatibility
@@ -1387,7 +1484,7 @@ function toggleManageMode() { manageMode ? exitManageMode() : openManageEntryMod
 function toggleEditMode() { toggleManageMode(); }
 
 function addCriterion() {
-  getCriteria().push({ title: "New criterion — click to rename", subs: [{ bloom: "", text: "New subcriterion — click to edit" }] });
+  getCriteria().push({ title: "Nieuwe competentie — klik om aan te passen", subs: [{ bloom: "", text: "Nieuw succescriteria — klik om te bewerken" }] });
   activeCrit = getCriteria().length - 1;
   scheduleSave(); render();
   // Auto-enter edit mode on the title
@@ -1399,8 +1496,8 @@ function removeCriterion(ci) {
   const hasScores = state.students.some(s => hasAnyScore(s, ci));
   const title = getCritTitle(ci);
   const msg = hasScores
-    ? `Remove criterion "${title}"?\n\nWARNING: This criterion has scores for one or more students. Those scores will be permanently lost.`
-    : `Remove criterion "${title}"?`;
+    ? `Competentie verwijderen "${title}"?\n\nWARNING: This competentie has scores for one or more students. Those scores will be permanently lost.`
+    : `Competentie verwijderen "${title}"?`;
   if (!confirm(msg)) return;
 
   // Remove from criteria array
@@ -1437,7 +1534,7 @@ function removeCriterion(ci) {
 }
 
 function addSubcriterion(ci) {
-  getCrit(ci).subs.push({ bloom: "", text: "New subcriterion — click to edit" });
+  getCrit(ci).subs.push({ bloom: "", text: "Nieuw succescriteria — klik om te bewerken" });
   scheduleSave(); render();
 }
 
@@ -1449,13 +1546,13 @@ function removeSubcriterion(ci, si) {
     return sc && sc[si] !== null && sc[si] !== undefined;
   });
   const msg = hasScores
-    ? `Remove subcriterion ${si+1} ("${getSubText(ci,si)}")?\n\nWARNING: This subcriterion has scores. Those scores will be permanently lost.`
-    : `Remove subcriterion ${si+1} ("${getSubText(ci,si)}")?`;
+    ? `Succescriteria verwijderen ${si+1} ("${getSubText(ci,si)}")?\n\nWARNING: This succescriteria has scores. Those scores will be permanently lost.`
+    : `Succescriteria verwijderen ${si+1} ("${getSubText(ci,si)}")?`;
   if (!confirm(msg)) return;
 
   crit.subs.splice(si, 1);
 
-  // Remap scores/subNotes for this criterion: shift sub indices
+  // Remap scores/subNotes for this competentie: shift sub indices
   state.students.forEach(name => {
     const sc = state.scores[name]?.[ci];
     if (sc) {
@@ -1546,7 +1643,7 @@ function exportSummary() {
   a.download="evaluation_full.txt"; a.click();
 }
 function clearAllScores() {
-  if(!confirm("Clear all scores? Student names and criterion texts are kept.")) return;
+  if(!confirm("Clear all scores? Student names and competentie texts are kept.")) return;
   state.students.forEach(s=>{state.scores[s]={};state.notes[s]={};});
   if (currentClass) saveLocalClass(currentClass, state);
   scheduleSave(); render();
@@ -1558,6 +1655,7 @@ function render() {
   renderTabs();
   if (!state.students.length) { renderEmptyState(); return; }
   if (activeCrit===21) renderConclusion(); else renderPanel();
+  requestAnimationFrame(() => _kbSetFocus(_kbFocusSi));
 }
 
 function renderEmptyState() {
@@ -1567,24 +1665,23 @@ function renderEmptyState() {
   panel.innerHTML = `
     <div style="max-width:480px;margin:3rem auto;text-align:center;padding:0 1rem">
       <div style="font-size:48px;margin-bottom:1rem">🎓</div>
-      <h2 style="font-size:20px;font-weight:600;margin-bottom:8px;color:var(--text)">Welcome to your new class</h2>
+      <h2 style="font-size:20px;font-weight:600;margin-bottom:8px;color:var(--text)">Welkom in je nieuwe klas</h2>
       <p style="font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:2rem">
-        Your class is set up and ready to go. Start by adding your students —
-        one by one or by importing a list of names all at once.
+        Je klas is klaar. Begin door je cursisten toe te voegen —
+        één voor één of via een namenlijst.
       </p>
       <div style="display:flex;flex-direction:column;gap:10px;max-width:280px;margin:0 auto">
         <button onclick="document.getElementById('name-input').focus()"
           style="padding:12px;font-size:14px;font-weight:500;border-radius:var(--r-md);background:#E1F5EE;border:0.5px solid #5DCAA5;color:#0F6E56;display:flex;align-items:center;justify-content:center;gap:8px">
-          <span style="font-size:18px">+</span> Add a student
+          <span style="font-size:18px">+</span> Cursist toevoegen
         </button>
         <button onclick="openImportModal()"
           style="padding:12px;font-size:14px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;gap:8px">
-          <span style="font-size:16px">📋</span> Import names from a list
+          <span style="font-size:16px">📋</span> Namen importeren
         </button>
       </div>
       <p style="font-size:12px;color:var(--text3);margin-top:2rem;line-height:1.6">
-        Once students are added, use <strong>Manage criteria</strong> to set up or import
-        the criteria for this class.
+        Zodra cursisten zijn toegevoegd, gebruik je <strong>Criteria aanpassen</strong> om de competenties voor deze klas in te stellen of te importeren.
       </p>
     </div>`;
 }
@@ -1599,7 +1696,7 @@ function renderSidebar() {
         <button class="reorder-btn" onclick="moveCriterion(${ci},-1)" title="Move up" ${ci===0?"disabled":""}>▲</button>
         <button class="reorder-btn" onclick="moveCriterion(${ci},1)"  title="Move down" ${ci===total-1?"disabled":""}>▼</button>
       </div>
-      <button onclick="event.stopPropagation();removeCriterion(${ci})" title="Remove criterion"
+      <button onclick="event.stopPropagation();removeCriterion(${ci})" title="Competentie verwijderen"
         style="margin-left:2px;padding:2px 6px;font-size:11px;border-radius:4px;border:0.5px solid #f09595;background:#fff;color:#A32D2D;flex-shrink:0">−</button>` : "";
     return `<div class="sidebar-item${act?" active":""}${hasS?" has-scores":""}"
         style="position:relative"
@@ -1613,13 +1710,13 @@ function renderSidebar() {
   }).join("");
 
   const addCritBtn = manageMode
-    ? `<div style="padding:8px 14px"><button onclick="addCriterion()" style="width:100%;font-size:12px;padding:6px;border-radius:var(--r-sm);border:0.5px dashed #5DCAA5;color:#0F6E56;background:#E1F5EE">+ Add criterion</button></div>`
+    ? `<div style="padding:8px 14px"><button onclick="addCriterion()" style="width:100%;font-size:12px;padding:6px;border-radius:var(--r-sm);border:0.5px dashed #5DCAA5;color:#0F6E56;background:#E1F5EE">+ Competentie toevoegen</button></div>`
     : "";
 
   const conclusionAct = activeCrit===21;
   const conclusionItem = `<div class="sidebar-item${conclusionAct?" active":""}" style="margin-bottom:4px;border-bottom:0.5px solid var(--border);padding-bottom:11px" onclick="activeCrit=21;render();closeSidebar()">
     <span class="sidebar-num" style="color:${conclusionAct?"#185FA5":""}">★</span>
-    <span class="sidebar-label" style="font-weight:${conclusionAct?"600":"400"}">Conclusion</span>
+    <span class="sidebar-label" style="font-weight:${conclusionAct?"600":"400"}">Overzicht</span>
   </div>`;
 
   document.getElementById("sidebar-list").innerHTML = conclusionItem + criteriaItems + addCritBtn;
@@ -1633,7 +1730,8 @@ function renderTabs() {
     el.innerHTML="";
     const legend = document.getElementById("eval-legend");
     if (legend) legend.style.display = "none";
-    if(btn){btn.disabled=true;btn.style.opacity="0.4";btn.title="Add students first";}
+    if(btn){btn.disabled=true;btn.style.opacity="0.4";btn.title="Voeg eerst een cursist toe";}
+    updateTabArrows();
     return;
   }
   if(btn){btn.disabled=false;btn.style.opacity="1";btn.title="";}
@@ -1655,12 +1753,22 @@ function renderTabs() {
         ontouchend="event.stopPropagation();cancelRemoveHold()">✕</span>
     </div>`;
   }).join("");
+
+  // Scroll active tab into view and update arrow state
+  requestAnimationFrame(() => {
+    const active = el.querySelector(".tab.active");
+    if (active) active.scrollIntoView({ inline: "nearest", block: "nearest" });
+    updateTabArrows();
+  });
+
+  // Update arrows on manual scroll (touch swipe)
+  el.onscroll = () => updateTabArrows();
 }
 
 function renderPanel() {
   const ci=activeCrit;
   const crit=getCrit(ci);
-  if (!crit) { document.getElementById("panel").innerHTML='<div class="empty">Select a criterion from the sidebar</div>'; return; }
+  if (!crit) { document.getElementById("panel").innerHTML='<div class="empty">Select a competentie from the sidebar</div>'; return; }
   const title=getCritTitle(ci);
 
   // Title area
@@ -1675,7 +1783,7 @@ function renderPanel() {
 
   const panel=document.getElementById("panel");
   if(!activeStudent){
-    panel.innerHTML='<div class="empty">Add a student above to start evaluating</div>';
+    panel.innerHTML='<div class="empty">Voeg een cursist toe om te beginnen met evalueren</div>';
     return;
   }
 
@@ -1711,30 +1819,22 @@ function renderPanel() {
   }
   chips+="</div>";
 
-  // ── Quick-fill bar ──
-  const unevaluated = crit.subs.filter((_,si) => getScore(activeStudent,ci,si) === null).length;
-  const quickFillBar = `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:0.75rem;padding:8px 12px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--r-sm)">
-    <span style="font-size:11px;font-weight:500;color:var(--text3);white-space:nowrap;text-transform:uppercase;letter-spacing:0.04em">Quick-fill:</span>
-    ${LEVELS.map((l,v) => `
-      <button onclick="quickFill(${ci},${v},false)"
-        style="font-size:11px;padding:3px 10px;border-radius:20px;background:${BG_CLR[v]};color:${TXT_CLR[v]};border:0.5px solid ${BD_CLR[v]};font-weight:500;white-space:nowrap"
-        title="Fill empty subcriteria with '${l}'">${l}</button>`).join("")}
-    <span style="font-size:10px;color:var(--text3);margin-left:2px">${unevaluated > 0 ? `fills ${unevaluated} empty` : "all filled ✓"}</span>
-    ${unevaluated < crit.subs.length ? `<button onclick="quickFill(${ci},null,true)"
-      style="font-size:11px;padding:3px 10px;border-radius:20px;background:var(--bg2);color:var(--text3);border:0.5px solid var(--border2);margin-left:auto"
-      title="Clear all scores for this criterion">Clear all</button>` : ""}
-  </div>`;
-
   // ── Table ──
   const gridCols = showSaColumn
     ? "2fr 52px repeat(4, 1fr) 44px 1.2fr"
     : "2fr 52px repeat(4, 1fr) 1.2fr";
   let table=`<div class="table-wrap"><div class="tbl-head" style="grid-template-columns:${gridCols}">
-    <div class="th" style="text-align:left;padding:8px 12px">Subcriterion</div>
-    <div class="th col-weight" title="Weight 1–5: higher = more influence on result">Weight</div>
-    ${LEVELS.map(l=>`<div class="th">${l}</div>`).join("")}
-    ${showSaColumn ? `<div class="th" style="background:#E6F1FB;color:#185FA5" title="Student self-assessment">Self</div>` : ""}
-    <div class="th col-note" style="text-align:left;padding:8px 8px">Note</div>
+    <div class="th" style="text-align:left;padding:8px 12px">Succescriteria</div>
+    <div class="th col-weight" title="Gewicht 1–5: hoger = meer invloed op resultaat">Gewicht</div>
+    ${LEVELS_SHORT.map((l,i)=>`<div class="th" style="background:${BG_CLR[i]};color:${TXT_CLR[i]};border-bottom:2.5px solid ${BD_CLR[i]};padding:5px 4px;display:flex;flex-direction:column;align-items:center;gap:3px">
+      <span style="font-size:11px;font-weight:500">${l}</span>
+      <button onclick="event.stopPropagation();quickFill(${ci},${i},false)"
+        style="font-size:9px;padding:1px 6px;border-radius:10px;border:0.5px solid ${BD_CLR[i]};background:transparent;color:${TXT_CLR[i]};cursor:pointer;font-family:inherit;opacity:0.75;white-space:nowrap"
+        onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.75"
+        title="Vul alle lege succescriteria in met '${l}'" class="qf-btn">Quick fill</button>
+    </div>`).join("")}
+    ${showSaColumn ? `<div class="th" style="background:#EEEDFE;color:#3C3489;border-bottom:2.5px solid #AFA9EC" title="Zelfevaluatie cursist">Zelf</div>` : ""}
+    <div class="th col-note" style="text-align:left;padding:8px 8px">Opmerking</div>
   </div>`;
 
   crit.subs.forEach((_,si)=>{
@@ -1788,18 +1888,18 @@ function renderPanel() {
   });
 
   const addSubBtn = manageMode
-    ? `<div style="padding:8px 12px;background:var(--bg3);border-top:0.5px solid var(--border)"><button onclick="addSubcriterion(${ci})" style="width:100%;font-size:12px;padding:6px;border-radius:var(--r-sm);border:0.5px dashed #5DCAA5;color:#0F6E56;background:#E1F5EE">+ Add subcriterion</button></div>`
+    ? `<div style="padding:8px 12px;background:var(--bg3);border-top:0.5px solid var(--border)"><button onclick="addSubcriterion(${ci})" style="width:100%;font-size:12px;padding:6px;border-radius:var(--r-sm);border:0.5px dashed #5DCAA5;color:#0F6E56;background:#E1F5EE">+ Succescriteria toevoegen</button></div>`
     : "";
   table+= addSubBtn + "</div>";
 
   const noteVal=(state.notes[activeStudent]&&state.notes[activeStudent][ci])||"";
   const noteHtml=`<div class="mic-wrap" style="margin-top:0">
-    <textarea id="critnote-${ci}" placeholder="Notes for ${escH(activeStudent)} on this criterion…"
+    <textarea id="critnote-${ci}" placeholder="Notes for ${escH(activeStudent)} on this competentie…"
       onchange="setNote('${esc(activeStudent)}',${ci},this.value)">${escH(noteVal)}</textarea>
     ${micBtn(`critnote-${ci}`, `function(v){setNote('${esc(activeStudent)}',${ci},v)}`)}
   </div>`;
 
-  panel.innerHTML = summaryHtml + chips + quickFillBar + table + noteHtml;
+  panel.innerHTML = summaryHtml + chips + table + noteHtml;
   if (manageMode) _initSubDrag(ci);
 }
 
@@ -1831,12 +1931,12 @@ function setGlobalFeedback(name, val) {
 function renderConclusion() {
   // Title
   const wrap = document.getElementById("page-title-wrap");
-  wrap.innerHTML = `<span class="page-title">Conclusion</span>
+  wrap.innerHTML = `<span class="page-title">Overzicht</span>
     <span style="font-size:13px;color:var(--text3);font-weight:400;margin-left:8px">Overall results per student</span>`;
 
   const panel = document.getElementById("panel");
   if (!activeStudent) {
-    panel.innerHTML = '<div class="empty">Add a student above to see their conclusion</div>';
+    panel.innerHTML = '<div class="empty">Voeg een cursist toe om het overzicht te zien</div>';
     return;
   }
 
@@ -1852,10 +1952,10 @@ function renderConclusion() {
   const vColor   = isPass ? "#0F6E56" : "#A32D2D";
   const vIcon    = isPass ? "✓" : "✗";
   const vIconBg  = isPass ? "#1D9E75" : "#E24B4A";
-  const vTitle   = isPass ? "Passed" : "Not yet passed";
+  const vTitle   = isPass ? "Geslaagd" : "Nog niet geslaagd";
   const vSub     = isPass
-    ? `${r.passed} of ${r.total} criteria achieved (${pctDisplay}%) — threshold is 80%`
-    : `${r.passed} of ${r.total} criteria achieved (${pctDisplay}%) — 80% needed to pass`;
+    ? `${r.passed} of ${r.total} competenties behaald (${pctDisplay}%) — drempel is 80%`
+    : `${r.passed} of ${r.total} competenties behaald (${pctDisplay}%) — 80% nodig om te slagen`;
 
   // Progress bar colour
   const barColor = pctDisplay >= 80 ? "#1D9E75" : pctDisplay >= 60 ? "#EF9F27" : "#E24B4A";
@@ -1872,7 +1972,7 @@ function renderConclusion() {
       pillText  = LEVELS[wr.levelIndex];
     } else {
       pillStyle = "background:var(--bg2);color:var(--text3);border-color:var(--border)";
-      pillText  = "Not evaluated";
+      pillText  = "Niet geëvalueerd";
     }
     const rowCls = status === "passed" ? "passed" : status === "failed" ? "failed" : "empty-r";
     const checkmark = status === "passed"
@@ -1903,19 +2003,19 @@ function renderConclusion() {
         <div class="stat-sub">of ${r.total} total</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Not yet passed</div>
+        <div class="stat-label">Nog niet geslaagd</div>
         <div class="stat-value" style="color:#E24B4A">${r.failed}</div>
         <div class="stat-sub">of ${r.total} total</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Not evaluated</div>
+        <div class="stat-label">Niet geëvalueerd</div>
         <div class="stat-value" style="color:var(--text3)">${r.empty}</div>
         <div class="stat-sub">of ${r.total} total</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Score</div>
         <div class="stat-value" style="color:${barColor}">${pctDisplay}%</div>
-        <div class="stat-sub">80% needed to pass</div>
+        <div class="stat-sub">80% nodig om te slagen</div>
       </div>
     </div>
 
@@ -2013,7 +2113,7 @@ function buildSaComparison(name) {
     </div>
     <div style="border:0.5px solid var(--border);border-radius:var(--r-md);overflow:hidden">
       <div style="display:grid;grid-template-columns:1fr 100px 100px 80px;gap:8px;padding:6px 12px;background:var(--bg2);font-size:11px;font-weight:500;color:var(--text3)">
-        <span>Criterion</span><span>Teacher</span><span>Student</span><span></span>
+        <span>Competentie</span><span>Teacher</span><span>Student</span><span></span>
       </div>
       ${rows}
     </div>
@@ -2038,9 +2138,17 @@ function closePdfModal() {
 }
 
 /* ── PDF Generation ── */
-function generateStudentPDF(name) {
+function generateStudentPDF(name, returnBlob = false) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
+  doc.setProperties({
+    title:    `Evaluatie — ${name}`,
+    subject:  `Competentie-evaluatie ${currentClass || ""}`,
+    author:   "Claudine Meter — cvo Groeipunt",
+    creator:  "Claudine Meter",
+    producer: "Claudine Meter / jsPDF",
+    keywords: "evaluatie, competenties, cvo Groeipunt",
+  });
   const PW = 210, PH = 297;
   const ML = 15, MR = 15, MT = 18;
   const CW = PW - ML - MR; // 180mm content width
@@ -2048,8 +2156,8 @@ function generateStudentPDF(name) {
 
   // Colour palette (RGB)
   const COL = {
-    green:  [99, 153, 34],
-    tgreen: [27, 158, 117],
+    green:  [0, 154, 155],    // brand #009a9b
+    tgreen: [0, 154, 155],    // brand #009a9b
     red:    [226, 75, 74],
     amber:  [239, 159, 39],
     blue:   [55, 138, 221],
@@ -2059,21 +2167,21 @@ function generateStudentPDF(name) {
     muted:  [120, 120, 120],
     white:  [255, 255, 255],
     rowbgs: [
-      [252, 235, 235],   // not achieved
-      [250, 238, 218],   // almost
-      [225, 245, 238],   // achieved
-      [230, 241, 251],   // flying colours (blue tint)
+      [252, 235, 235],   // niet behaald
+      [250, 238, 218],   // bijna
+      [225, 245, 238],   // behaald
+      [230, 241, 251],   // uitmuntend
     ],
     rowborder: [
       [240, 149, 149],
       [250, 199, 117],
-      [93, 202, 165],
-      [133, 183, 235],   // flying colours (blue border)
+      [0, 184, 185],     // brand light
+      [133, 183, 235],
     ],
   };
 
-  const LEVEL_LABELS = ["Not achieved", "Almost achieved", "Achieved", "Achieved with flying colours"];
-  const LEVEL_SHORT  = ["Not achieved", "Almost achieved", "Achieved", "Flying colours"];
+  const LEVEL_LABELS = ["Niet behaald", "Bijna behaald", "Behaald", "Uitmuntend behaald"];
+  const LEVEL_SHORT  = ["Niet behaald", "Bijna behaald", "Behaald", "Uitmuntend"];
 
   let y = MT;
   let pageNum = 1;
@@ -2095,8 +2203,8 @@ function generateStudentPDF(name) {
     doc.line(ML, PH - 12, PW - MR, PH - 12);
     doc.setFontSize(8);
     doc.setTextColor(...COL.muted);
-    doc.text("Claudine Meter — Adult education", ML, PH - 7);
-    doc.text(`${name}  ·  Page ${pageNum}`, PW - MR, PH - 7, { align: "right" });
+    doc.text("Claudine Meter — Competenties evalueren", ML, PH - 7);
+    doc.text(`${name}  ·  Pagina ${pageNum}`, PW - MR, PH - 7, { align: "right" });
   }
 
   // ── Cover header ──
@@ -2119,7 +2227,7 @@ function generateStudentPDF(name) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(...COL.muted);
-  doc.text(`Generated on ${today}`, ML, y);
+  doc.text(`Gegenereerd op ${today}`, ML, y);
   y += 10;
 
   // Overall summary box
@@ -2171,7 +2279,7 @@ function generateStudentPDF(name) {
     y += 8;
     doc.setFontSize(8);
     doc.setTextColor(...COL.muted);
-    doc.text(`${grandTotal} of ${totalSubs} subcriteria evaluated`, ML, y);
+    doc.text(`${grandTotal} van ${totalSubs} succescriteria geëvalueerd`, ML, y);
     y += 8;
   }
 
@@ -2186,7 +2294,7 @@ function generateStudentPDF(name) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.setTextColor(...COL.white);
-  doc.text("CONCLUSION", ML, 7.5);
+  doc.text("OVERZICHT", ML, 7.5);
   doc.setFont("helvetica", "normal");
   doc.text(name, PW - MR, 7.5, { align: "right" });
   y = 22;
@@ -2212,11 +2320,11 @@ function generateStudentPDF(name) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.setTextColor(...vColor);
-  doc.text(isPass ? "Passed" : "Not yet passed", ML + 20, y + 8);
+  doc.text(isPass ? "Geslaagd" : "Nog niet geslaagd", ML + 20, y + 8);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(...vColor);
-  doc.text(`${r.passed} of ${r.total} criteria achieved (${pctDisp}%)`, ML + 20, y + 14);
+  doc.text(`${r.passed} van ${r.total} competenties behaald (${pctDisp}%)`, ML + 20, y + 14);
   y += 24;
 
   // Progress bar
@@ -2233,7 +2341,7 @@ function generateStudentPDF(name) {
 
   // Stat row
   const statW = CW / 4;
-  const statLabels = ["Criteria passed","Not yet passed","Not evaluated","Score"];
+  const statLabels = ["Geslaagd","Niet geslaagd","Niet geëvalueerd","Score"];
   const statVals   = [String(r.passed), String(r.failed), String(r.empty), pctDisp + "%"];
   const statColors = [[27,158,117],[226,75,74],[160,160,160],[...vColor]];
   doc.setFillColor(...COL.bg);
@@ -2257,7 +2365,7 @@ function generateStudentPDF(name) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
   doc.setTextColor(...COL.text);
-  doc.text("Criteria breakdown", ML, y);
+  doc.text("Overzicht competenties", ML, y);
   y += 5;
 
   r.details.forEach(({ci, wr, status}) => {
@@ -2290,7 +2398,7 @@ function generateStudentPDF(name) {
       doc.setFont("helvetica", "normal");
       doc.setFontSize(7);
       doc.setTextColor(...COL.muted);
-      doc.text("Not evaluated", PW-MR-3, y+5, { align:"right" });
+      doc.text("Niet geëvalueerd", PW-MR-3, y+5, { align:"right" });
     }
     y += rowH + 0.8;
   });
@@ -2303,7 +2411,7 @@ function generateStudentPDF(name) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8.5);
     doc.setTextColor(...COL.text);
-    doc.text("Global feedback", ML, y);
+    doc.text("Algemene feedback", ML, y);
     y += 5;
     const fbWrapped = doc.splitTextToSize(fb, CW - 8);
     const fbH = fbWrapped.length * 4.5 + 6;
@@ -2323,7 +2431,7 @@ function generateStudentPDF(name) {
   getCriteria().forEach((crit, ci) => {
     const critTitle = getCritTitle(ci);
 
-    // Count scores for this criterion
+    // Count scores for this competentie
     const subScores = crit.subs.map((_,si) => getScore(name, ci, si));
     const critCounts = [0,0,0,0];
     subScores.forEach(v => { if (v !== null) critCounts[v]++; });
@@ -2356,7 +2464,7 @@ function generateStudentPDF(name) {
     }
     y += hdrH + 2;
 
-    // Subcriterion rows
+    // Succescriteria rows
     crit.subs.forEach((_, si) => {
       const sc   = subScores[si];
       const text = getSubText(ci, si);
@@ -2436,7 +2544,7 @@ function generateStudentPDF(name) {
       }
     });
 
-    // Notes for this criterion
+    // Notes for this competentie
     const note = state.notes[name] && state.notes[name][ci];
     if (note) {
       const noteWrapped = doc.splitTextToSize(`Notes: ${note}`, CW - 8);
@@ -2456,7 +2564,51 @@ function generateStudentPDF(name) {
     y += 4; // gap between criteria
   });
 
-  doc.save(`${name}_evaluation.pdf`);
+  if (returnBlob) {
+    return doc.output("arraybuffer");
+  }
+  doc.save(`${name}_evaluatie.pdf`);
+}
+
+/* ── Export whole class as zip ── */
+async function generateClassZip() {
+  if (!state.students.length) { alert("Geen cursisten in deze klas."); return; }
+
+  const btn = document.getElementById("btn-class-zip");
+  const origText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<span>⏳</span> Bezig…`;
+
+  try {
+    const zip = new JSZip();
+    const folder = zip.folder(currentClass || "klas");
+    let done = 0;
+
+    for (const name of state.students) {
+      btn.innerHTML = `<span>⏳</span> ${done + 1}/${state.students.length} — ${escH(name)}`;
+      // Small yield to keep UI responsive
+      await new Promise(r => setTimeout(r, 0));
+      const buf = generateStudentPDF(name, true);
+      const safe = name.replace(/[^a-z0-9_\-\s]/gi, "_");
+      folder.file(`${safe}_evaluatie.pdf`, buf);
+      done++;
+    }
+
+    btn.innerHTML = `<span>📦</span> ZIP maken…`;
+    const blob = await zip.generateAsync({ type: "blob", compression: "STORE" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = `${currentClass || "klas"}_evaluaties.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+    closePdfModal();
+  } catch(e) {
+    alert("Fout bij het aanmaken van het zip-bestand: " + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = origText;
+  }
 }
 
 /* ── Speech to text ── */
@@ -2713,27 +2865,52 @@ async function wizardCheckCode() {
   if (!name) { inp.focus(); return; }
   const resultEl = document.getElementById("wizard-result");
   resultEl.className = "settings-result ok";
-  resultEl.textContent = "Checking…";
+  resultEl.textContent = "Controleren…";
   try {
     const remote = await pullClass(name);
     _wizardClassName = name;
     resultEl.className = "settings-result";
     resultEl.textContent = "";
-    if (remote && remote.teacherPwdHash) {
-      // Existing class with password — go to login step
+
+    // Determine the authoritative password hash:
+    // prefer remote, fall back to local (in case of sync issues)
+    const local = loadLocalClass(name);
+    const pwdHash = (remote && remote.teacherPwdHash) || (local && local.teacherPwdHash) || "";
+
+    if (remote && pwdHash) {
+      // Class exists and has a password — ask for it
       wizardShowStep("login");
       setTimeout(() => document.getElementById("wizard-pwd-login")?.focus(), 100);
     } else if (remote) {
-      // Existing class without password (legacy) — load directly
+      // Class exists but no password set (legacy) — load directly
       await wizardLoadClass(name, remote);
+    } else if (local && local.teacherPwdHash) {
+      // Not on sheet yet but exists locally with a password — ask for it
+      // Verify locally until sheet is reachable
+      wizardShowStep("login");
+      setTimeout(() => document.getElementById("wizard-pwd-login")?.focus(), 100);
+    } else if (local) {
+      // Local only, no password — load directly
+      await wizardLoadClass(name, local);
     } else {
-      // New class — go to password creation step
+      // Brand new class — set up password
       wizardShowStep("new");
       setTimeout(() => document.getElementById("wizard-pwd-new")?.focus(), 100);
     }
   } catch(e) {
-    resultEl.className = "settings-result err";
-    resultEl.textContent = "Connection error: " + e.message;
+    // Sheet unreachable — fall back to local
+    const local = loadLocalClass(name);
+    if (local && local.teacherPwdHash) {
+      _wizardClassName = name;
+      wizardShowStep("login");
+      setTimeout(() => document.getElementById("wizard-pwd-login")?.focus(), 100);
+    } else if (local) {
+      _wizardClassName = name;
+      await wizardLoadClass(name, local);
+    } else {
+      resultEl.className = "settings-result err";
+      resultEl.textContent = "Verbindingsfout: " + e.message;
+    }
   }
 }
 
@@ -2741,20 +2918,37 @@ async function wizardDoLogin() {
   const pwd      = document.getElementById("wizard-pwd-login").value;
   const resultEl = document.getElementById("wizard-login-result");
   if (!pwd) { document.getElementById("wizard-pwd-login").focus(); return; }
-  resultEl.className = "settings-result ok"; resultEl.textContent = "Checking…";
+  resultEl.className = "settings-result ok"; resultEl.textContent = "Controleren…";
   try {
-    const remote = await pullClass(_wizardClassName);
-    const hash   = await hashPassword(pwd);
-    if (hash !== remote.teacherPwdHash) {
-      resultEl.className = "settings-result err";
-      resultEl.textContent = "Incorrect password. Try again.";
+    const hash = await hashPassword(pwd);
+    // Try sheet first, fall back to local
+    let remote = null;
+    let pwdHash = "";
+    try {
+      remote  = await pullClass(_wizardClassName);
+      pwdHash = (remote && remote.teacherPwdHash) || "";
+    } catch(e) {}
+    // Fall back to local if sheet unreachable
+    if (!pwdHash) {
+      const local = loadLocalClass(_wizardClassName);
+      pwdHash = (local && local.teacherPwdHash) || "";
+      if (!remote) remote = local;
+    }
+    if (!pwdHash) {
+      // No hash found anywhere — just load
+      await wizardLoadClass(_wizardClassName, remote || {});
       return;
     }
-    resultEl.className = "settings-result ok"; resultEl.textContent = "Correct! Loading…";
-    await wizardLoadClass(_wizardClassName, remote);
+    if (hash !== pwdHash) {
+      resultEl.className = "settings-result err";
+      resultEl.textContent = "Onjuist wachtwoord. Probeer opnieuw.";
+      return;
+    }
+    resultEl.className = "settings-result ok"; resultEl.textContent = "Correct! Laden…";
+    await wizardLoadClass(_wizardClassName, remote || loadLocalClass(_wizardClassName) || {});
   } catch(e) {
     resultEl.className = "settings-result err";
-    resultEl.textContent = "Error: " + e.message;
+    resultEl.textContent = "Fout: " + e.message;
   }
 }
 
@@ -2764,12 +2958,12 @@ async function wizardCreateClass() {
   const resEl   = document.getElementById("wizard-new-result");
   if (!pwd) { document.getElementById("wizard-pwd-new").focus(); return; }
   if (pwd !== confirm) {
-    resEl.className = "settings-result err"; resEl.textContent = "Passwords don't match."; return;
+    resEl.className = "settings-result err"; resEl.textContent = "De wachtwoorden komen niet overeen. Probeer opnieuw."; return;
   }
   if (pwd.length < 4) {
-    resEl.className = "settings-result err"; resEl.textContent = "Password must be at least 4 characters."; return;
+    resEl.className = "settings-result err"; resEl.textContent = "Kies een wachtwoord van minstens 4 tekens."; return;
   }
-  resEl.className = "settings-result ok"; resEl.textContent = "Creating class…";
+  resEl.className = "settings-result ok"; resEl.textContent = "Klas aanmaken…";
   try {
     const cfg = state.gsConfig;
     state = defaultState();
@@ -3158,6 +3352,99 @@ async function debugReadIndex() {
   } catch(e) { el.textContent = "Error: " + e.message; }
 }
 
+/* ── FAQ ── */
+const FAQ_ITEMS = [
+  {
+    q: "De pdf-bestanden in het zip-bestand worden niet geopend. Windows zegt dat ze gevaarlijk zijn.",
+    a: `Dit is een bekende beveiliging van Windows. Bestanden die via internet gedownload worden, krijgen automatisch een "Mark of the Web" mee. Dit los je op in twee stappen:<br><br>
+        <strong>Methode 1 — Zip deblokkeren (aanbevolen):</strong><br>
+        Klik rechts op het zip-bestand → Eigenschappen → vink onderaan "Deblokkeren" aan → Klik OK. Pak het zip daarna pas uit. Alle bestanden erin zijn dan automatisch vrij.<br><br>
+        <strong>Methode 2 — Per PDF:</strong><br>
+        Klik rechts op een PDF → Eigenschappen → vink "Deblokkeren" aan → OK.`
+  },
+  {
+    q: "De synchronisatie werkt niet. Ik zie 'Sync mislukt' of er gebeurt niets.",
+    a: `Controleer eerst of je internetverbinding werkt. Probeer de pagina te verversen en opnieuw in te loggen.<br><br>
+        Lukt het daarna nog steeds niet? Neem contact op met de beheerder via een ticket op <strong>4me</strong>. Zij lossen dit voor je op.`
+  },
+  {
+    q: "Een cursist kan niet inloggen. Zijn code wordt niet herkend.",
+    a: `Controleer het volgende:<br><br>
+        1. Exporteer de toegangscodes opnieuw via <strong>Toegangscodes exporteren</strong> en controleer of de cursist de juiste code heeft.<br>
+        2. Let op hoofdletters en kleine letters — de code is hoofdlettergevoelig.<br>
+        3. Voeg de cursist toe, sla op, en probeer opnieuw.<br><br>
+        Lukt het nog steeds niet? Neem contact op met de beheerder via een ticket op <strong>4me</strong>. Zij lossen dit voor je op.`
+  },
+  {
+    q: "Ik ben mijn leerkrachtwachtwoord vergeten.",
+    a: `De beheerder kan je wachtwoord resetten. Neem contact op met de beheerder via een ticket op <strong>4me</strong>. Zij lossen dit voor je op.`
+  },
+  {
+    q: "Scores worden niet opgeslagen of ik zie 'Opslaan mislukt'.",
+    a: `Je gegevens zijn <strong>niet verloren</strong> — ze staan nog in je browser. Probeer het volgende:<br><br>
+        1. Controleer je internetverbinding.<br>
+        2. Wacht even en verander een score — dit triggert opnieuw een opslagpoging.<br>
+        3. Ververs de pagina en log opnieuw in.<br><br>
+        Blijft het probleem? Sluit de browser <em>niet</em> af en neem contact op via een ticket op <strong>4me</strong> zodat je gegevens veilig kunnen worden overgedragen.`
+  },
+  {
+    q: "Na het verversen van de pagina ben ik uitgelogd.",
+    a: `Claudine Meter vraagt eens per browsersessie om het wachtwoord. Zodra je een tabblad sluit of de pagina volledig ververst, moet je opnieuw inloggen — dit is bewust zo ingesteld voor beveiliging.<br><br>
+        Gebruik de <strong>🔒 vergrendelknop</strong> bovenaan om bewust uit te loggen als je je apparaat even verlaat.`
+  },
+  {
+    q: "Welkomstscherm ‘Welkom in je nieuwe klas’ verdwijnt niet als ik cursisten toevoeg.",
+    a: `Dit kan voorkomen als de browser een oude versie van de app in de cache heeft staan.<br><br>
+        Ververs de pagina met <strong>Ctrl+Shift+R</strong> (Windows) of <strong>Cmd+Shift+R</strong> (Mac) om de cache te omzeilen. Als het probleem aanhoudt, wis dan de browsergeschiedenis en probeer opnieuw.`
+  },
+  {
+    q: "De zelfevaluatie van een cursist is niet zichtbaar in het leerkrachtoverzicht.",
+    a: `De zelfevaluatie wordt ingevuld door de cursist en wordt automatisch gesynchroniseerd. De leerkrachtweergave laadt deze gegevens bij het opstarten van de app.<br><br>
+        Als de zelfevaluatie nog niet zichtbaar is:<br>
+        1. Ververs de pagina en log opnieuw in — dit laadt de recentste gegevens.<br>
+        2. Zorg dat de <strong>Zelfevaluatie-kolom</strong> ingeschakeld is via de knop "Zelfevaluatie" in de bovenbalk.<br><br>
+        Zijn de gegevens daarna nog steeds niet zichtbaar? Neem contact op met de beheerder via een ticket op <strong>4me</strong>. Zij lossen dit voor je op.`
+  },
+  {
+    q: "Hoe voeg ik meerdere competenties tegelijk toe vanuit een andere klas?",
+    a: `Klik op <strong>Criteria aanpassen</strong> in de bovenbalk → kies <strong>Importeren uit een andere klas</strong> → voer de klascode in van de bronklas → klik Laden → bekijk het voorbeeld → klik Importeren.<br><br>
+        Alleen de competentietitels en succescriteria worden gekopieerd. Scores en cursistnamen worden nooit overgenomen.`
+  },
+  {
+    q: "Een cursist ziet zijn resultaten niet of krijgt een foutmelding bij het inloggen.",
+    a: `1. Controleer of de cursist de juiste persoonlijke code gebruikt (let op hoofdletters).<br>
+        2. Is er internetverbinding op het apparaat van de cursist?<br>
+        3. Vernieuw de toegangscode via <strong>Toegangscodes exporteren</strong> en geef de cursist de nieuwe code.<br><br>
+        Lukt het nog steeds niet? Neem contact op met de beheerder via een ticket op <strong>4me</strong>. Zij lossen dit voor je op.`
+  },
+];
+
+function openFaq() {
+  const list = document.getElementById("faq-list");
+  list.innerHTML = FAQ_ITEMS.map((item, i) => `
+    <div style="border:0.5px solid var(--border);border-radius:var(--r-sm);margin-bottom:8px;overflow:hidden">
+      <button onclick="toggleFaqItem(${i})" style="width:100%;text-align:left;padding:12px 14px;background:var(--bg2);border:none;cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font-size:13px;font-weight:500;color:var(--text);border-radius:0;line-height:1.4">
+        <span>${escH(item.q)}</span>
+        <span id="faq-icon-${i}" style="flex-shrink:0;font-size:16px;color:var(--text3);transition:transform 0.2s">›</span>
+      </button>
+      <div id="faq-answer-${i}" style="display:none;padding:12px 14px;font-size:13px;color:var(--text2);line-height:1.7;border-top:0.5px solid var(--border)">${item.a}</div>
+    </div>`).join("");
+  document.getElementById("faq-modal").classList.add("open");
+}
+
+function closeFaq() {
+  document.getElementById("faq-modal").classList.remove("open");
+}
+
+function toggleFaqItem(i) {
+  const answer = document.getElementById(`faq-answer-${i}`);
+  const icon   = document.getElementById(`faq-icon-${i}`);
+  const isOpen = answer.style.display !== "none";
+  answer.style.display = isOpen ? "none" : "block";
+  icon.style.transform = isOpen ? "" : "rotate(90deg)";
+  icon.style.color     = isOpen ? "var(--text3)" : "#009a9b";
+}
+
 /* ── Gear menu ── */
 function toggleGearMenu(e) {
   e.stopPropagation();
@@ -3263,6 +3550,42 @@ function confirmImport() {
   closeImportModal();
 }
 
+/* ── Start screen ── */
+function showStartScreen() {
+  document.getElementById("start-screen").classList.add("open");
+  // Hide role picker if open
+  document.getElementById("role-modal")?.classList.remove("open");
+}
+function hideStartScreen() {
+  document.getElementById("start-screen").classList.remove("open");
+}
+function startAsTeacher() {
+  hideStartScreen();
+  const savedClass = localStorage.getItem(LS_CURRENT_KEY);
+  if (savedClass) {
+    // Known class — pre-fill the class code and go to step 1
+    // wizardCheckCode will then route to password step or class code confirm
+    _wizardClassName = "";
+    document.getElementById("wizard-modal").classList.add("open");
+    wizardShowStep("code");
+    const inp = document.getElementById("wizard-classname");
+    if (inp) {
+      inp.value = savedClass;
+      inp.placeholder = savedClass;
+    }
+    // Auto-trigger the check so it goes straight to password step
+    setTimeout(() => wizardCheckCode(), 150);
+  } else {
+    // No known class — full wizard
+    showWizard();
+  }
+}
+function startAsStudent() {
+  hideStartScreen();
+  document.getElementById("student-login-modal").classList.add("open");
+  setTimeout(() => document.getElementById("student-code-input")?.focus(), 100);
+}
+
 /* ── Role picker ── */
 function showRolePicker() {
   document.getElementById("role-modal").classList.add("open");
@@ -3332,7 +3655,7 @@ async function studentLogin() {
 /* ── Student view renderer ── */
 let _studentContext = null; // { studentName, classCode, classData }
 let _saAnswers = {};        // { ci: { si: 'yes'|'no'|'unsure' } }
-let _saCurrentCi = null;    // which criterion is currently being assessed
+let _saCurrentCi = null;    // which competentie is currently being assessed
 
 function showStudentScreen(screen, ci) {
   document.getElementById("student-sa-body").classList.toggle("active", screen === "sa");
@@ -3357,7 +3680,7 @@ function showStudentView(studentName, classCode, classData) {
   overlay.classList.add("open");
 }
 
-/* ── Criterion picker ── */
+/* ── Competentie picker ── */
 function _renderCriterionPicker() {
   const { studentName, classData } = _studentContext;
   const _criteria = classData.criteria || DEFAULT_CRITERIA;
@@ -3379,20 +3702,20 @@ function _renderCriterionPicker() {
 
   let html=`
     <div style="background:${vBg};border:0.5px solid ${vBorder};border-radius:var(--r-md);padding:1rem 1.25rem;margin-bottom:1rem;color:${vColor}">
-      <div style="font-size:17px;font-weight:600;margin-bottom:3px">${isPass?"Passed":"Not yet passed"}</div>
-      <div style="font-size:13px;opacity:0.85">${passed} of ${_criteria.length} criteria achieved (${pct}%)</div>
+      <div style="font-size:17px;font-weight:600;margin-bottom:3px">${isPass?"Geslaagd":"Nog niet geslaagd"}</div>
+      <div style="font-size:13px;opacity:0.85">${passed} of ${_criteria.length} competenties behaald (${pct}%)</div>
     </div>
     <div style="background:#e0e0e0;border-radius:4px;height:6px;overflow:hidden;margin-bottom:1.25rem">
       <div style="height:100%;border-radius:4px;background:${barColor};width:${Math.min(100,pct)}%"></div>
     </div>
-    <div style="font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px">Choose a criterion to view</div>`;
+    <div style="font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px">Choose a competentie to view</div>`;
 
   html += _criteria.map((crit,ci)=>{
     const wr = _calcWeighted(ci);
     const hasSa = _saAnswers[ci] && Object.values(_saAnswers[ci]).some(Boolean);
     const pill = wr
       ? `<span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;background:${BG_CLR[wr.levelIndex]};color:${TXT_CLR[wr.levelIndex]};border:0.5px solid ${BD_CLR[wr.levelIndex]};flex-shrink:0">${LEVELS[wr.levelIndex]}</span>`
-      : `<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--bg2);color:var(--text3);flex-shrink:0">Not evaluated</span>`;
+      : `<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--bg2);color:var(--text3);flex-shrink:0">Niet geëvalueerd</span>`;
     const saBadge = hasSa
       ? `<span style="font-size:10px;padding:1px 6px;border-radius:20px;background:#E6F1FB;color:#185FA5;flex-shrink:0">✓ Self-assessed</span>`
       : `<span style="font-size:10px;padding:1px 6px;border-radius:20px;background:var(--bg2);color:var(--text3);flex-shrink:0">Self-assess</span>`;
@@ -3408,7 +3731,7 @@ function _renderCriterionPicker() {
   body.innerHTML = html;
 }
 
-/* ── Self-assessment for one criterion ── */
+/* ── Self-assessment for one competentie ── */
 function startSaForCriterion(ci) {
   _saCurrentCi = ci;
   _renderSingleSaForm(ci);
@@ -3436,7 +3759,7 @@ function _renderSingleSaForm(ci) {
   }).join("");
 
   body.innerHTML = `
-    <div style="font-size:12px;color:var(--text3);margin-bottom:6px">Self-assessment · Criterion ${ci+1}</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:6px">Self-assessment · Competentie ${ci+1}</div>
     <div class="sa-crit-title" style="margin-bottom:1rem">${escH(crit.title)}</div>
     ${subCards}
     <div class="sa-nav">
@@ -3452,7 +3775,7 @@ function setSaAnswer(ci, si, val) {
 }
 
 function _saSkip(ci) {
-  if (!confirm("Are you sure you want to skip the self-assessment for this criterion?\n\nYou can always come back to fill it in later.")) return;
+  if (!confirm("Are you sure you want to skip the self-assessment for this competentie?\n\nYou can always come back to fill it in later.")) return;
   _showCriterionResult(ci);
 }
 
@@ -3472,7 +3795,7 @@ async function _saveSaToSheet() {
   } catch(e) {}
 }
 
-/* ── Single criterion results view ── */
+/* ── Single competentie results view ── */
 function _showCriterionResult(ci) {
   const { studentName, classData } = _studentContext;
   const _criteria = classData.criteria || DEFAULT_CRITERIA;
@@ -3518,14 +3841,14 @@ function _showCriterionResult(ci) {
 
   body.innerHTML = `
     <div style="margin-bottom:4px"><button onclick="_renderCriterionPicker();showStudentScreen('picker')" style="font-size:12px;color:var(--text3);border:none;background:transparent;padding:0;cursor:pointer">← All criteria</button></div>
-    <div style="font-size:12px;color:var(--text3);margin-bottom:4px">Criterion ${ci+1}</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:4px">Competentie ${ci+1}</div>
     <div class="sa-crit-title" style="margin-bottom:10px">${escH(crit.title)}</div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;flex-wrap:wrap">${pill}</div>
     ${saHtml}
     <div class="student-crit-card">${subsHtml}</div>
     ${note?`<div style="background:#FAEEDA;border:0.5px solid #FAC775;border-radius:var(--r-sm);padding:10px 14px;margin-top:1rem;font-size:13px;color:#854F0B;line-height:1.6"><div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Teacher feedback</div>${escH(note)}</div>`:""}
     <div style="margin-top:1rem;display:flex;gap:8px;flex-wrap:wrap">
-      <button onclick="startSaForCriterion(${ci})" style="font-size:13px;padding:8px 16px;border-radius:20px;border:0.5px solid #378ADD;color:#185FA5;background:#E6F1FB">${_saAnswers[ci]?'Update self-assessment':'Do self-assessment'}</button>
+      <button onclick="startSaForCriterion(${ci})" style="font-size:13px;padding:8px 16px;border-radius:20px;border:0.5px solid #AFA9EC;color:#3C3489;background:#EEEDFE">${_saAnswers[ci]?'Update self-assessment':'Do self-assessment'}</button>
       <button onclick="_renderCriterionPicker();showStudentScreen('picker')" style="font-size:13px;padding:8px 16px;border-radius:20px;background:var(--bg2)">← Back to overview</button>
     </div>`;
 
@@ -3540,6 +3863,13 @@ function exportAccessCodes() {
 
   const { jsPDF } = window.jspdf;
   const doc  = new jsPDF({ unit:"mm", format:"a4" });
+  doc.setProperties({
+    title:    `Toegangscodes — ${currentClass || "klas"}`,
+    subject:  "Persoonlijke toegangscodes cursisten",
+    author:   "Claudine Meter — cvo Groeipunt",
+    creator:  "Claudine Meter",
+    producer: "Claudine Meter / jsPDF",
+  });
   const PW   = 210, PH = 297;
   const ML   = 14, MR = 14, MT = 18;
   const CW   = PW - ML - MR;
@@ -3547,11 +3877,11 @@ function exportAccessCodes() {
   const cls   = currentClass || "—";
 
   // ── Colour palette ──
-  const GREEN  = [74, 124, 46];
+  const GREEN  = [0, 154, 155];     // brand #009a9b
   const DKGRAY = [40, 40, 40];
   const MDGRAY = [100, 100, 100];
   const LTGRAY = [220, 220, 220];
-  const BGGREEN= [240, 247, 235];
+  const BGGREEN= [224, 247, 247];   // brand light tint
   const WHITE  = [255, 255, 255];
 
   // ════════════════════════════════════════════
@@ -3564,21 +3894,21 @@ function exportAccessCodes() {
   doc.setTextColor(...WHITE);
   doc.setFont("helvetica","bold");
   doc.setFontSize(11);
-  doc.text("Claudine Meter — Student Access Codes", ML, 9);
+  doc.text("Claudine Meter — Toegangscodes cursisten", ML, 9);
   doc.setFont("helvetica","normal");
   doc.setFontSize(9);
-  doc.text(`Confidential — keep this document private`, PW - MR, 9, { align:"right" });
+  doc.text(`Vertrouwelijk — bewaar dit document privé`, PW - MR, 9, { align:"right" });
 
   // Subtitle
   doc.setTextColor(...DKGRAY);
   doc.setFont("helvetica","bold");
   doc.setFontSize(13);
-  doc.text(`Class: ${cls}`, ML, MT + 4);
+  doc.text(`Klas: ${cls}`, ML, MT + 4);
   doc.setFont("helvetica","normal");
   doc.setFontSize(9);
   doc.setTextColor(...MDGRAY);
-  doc.text(`Generated: ${today}  ·  ${state.students.length} students`, ML, MT + 10);
-  doc.text(`Students log in with their personal code only — no password or name needed.`, ML, MT + 15);
+  doc.text(`Gegenereerd: ${today}  ·  ${state.students.length} cursisten`, ML, MT + 10);
+  doc.text(`Cursisten melden zich aan met hun persoonlijke code — geen wachtwoord of naam nodig.`, ML, MT + 15);
 
   // Table header
   let y = MT + 22;
@@ -3590,8 +3920,8 @@ function exportAccessCodes() {
   doc.setTextColor(...WHITE);
   doc.setFont("helvetica","bold");
   doc.setFontSize(9);
-  doc.text("Student name", COL1 + 3, y + 5.5);
-  doc.text("Personal access code", COL2 + 3, y + 5.5);
+  doc.text("Naam cursist", COL1 + 3, y + 5.5);
+  doc.text("Persoonlijke toegangscode", COL2 + 3, y + 5.5);
   y += ROW_H;
 
   // Table rows
@@ -3625,7 +3955,7 @@ function exportAccessCodes() {
   doc.setFont("helvetica","normal");
   doc.setFontSize(8);
   doc.setTextColor(...MDGRAY);
-  doc.text("Page 1 — Teacher overview", PW / 2, PH - 8, { align:"center" });
+  doc.text("Pagina 1 — Overzicht leerkracht", PW / 2, PH - 8, { align:"center" });
 
   // ════════════════════════════════════════════
   //  PAGE 2 — Cut-out slips
@@ -3638,10 +3968,10 @@ function exportAccessCodes() {
   doc.setTextColor(...WHITE);
   doc.setFont("helvetica","bold");
   doc.setFontSize(11);
-  doc.text("Claudine Meter — Cut-out slips", ML, 9);
+  doc.text("Claudine Meter — Knipstrookjes", ML, 9);
   doc.setFont("helvetica","normal");
   doc.setFontSize(9);
-  doc.text(`Class: ${cls}  ·  Cut along the dotted lines`, PW - MR, 9, { align:"right" });
+  doc.text(`Klas: ${cls}  ·  Knip langs de stippellijnen`, PW - MR, 9, { align:"right" });
 
   // Slips — 3 columns, up to 10 rows = 30 per page
   const SLIP_W  = (CW - 8) / 3;   // 3 columns with gaps
@@ -3665,7 +3995,7 @@ function exportAccessCodes() {
       doc.setTextColor(...WHITE);
       doc.setFont("helvetica","bold");
       doc.setFontSize(11);
-      doc.text("Claudine Meter — Cut-out slips (continued)", ML, 9);
+      doc.text("Claudine Meter — Knipstrookjes (vervolg)", ML, 9);
     }
 
     const localRow = row % 10;
@@ -3707,7 +4037,7 @@ function exportAccessCodes() {
     doc.setFont("helvetica","normal");
     doc.setFontSize(6.5);
     doc.setTextColor(...MDGRAY);
-    doc.text("Personal code:", sx + SLIP_W / 2, sy + 15, { align:"center" });
+    doc.text("Persoonlijke code:", sx + SLIP_W / 2, sy + 15, { align:"center" });
 
     // Code value
     doc.setFont("courier","bold");
@@ -3720,7 +4050,7 @@ function exportAccessCodes() {
   doc.setFont("helvetica","normal");
   doc.setFontSize(8);
   doc.setTextColor(...MDGRAY);
-  doc.text("Page 2 — Cut-out slips · Cut along dotted lines and hand one to each student", PW / 2, PH - 8, { align:"center" });
+  doc.text("Pagina 2 — Knipstrookjes · Knip langs de stippellijnen en geef er één aan elke cursist", PW / 2, PH - 8, { align:"center" });
 
   // Save
   doc.save(`access_codes_${cls}.pdf`);
@@ -3747,10 +4077,10 @@ document.getElementById("name-input").addEventListener("keydown",e=>{if(e.key===
   // Restore last active class from localStorage
   const savedClass = localStorage.getItem(LS_CURRENT_KEY);
   if (savedClass) {
-    // If not authenticated this session, require password
+    // If not authenticated this session, show start screen — password required
     if (!isSessionAuthed()) {
       render();
-      showRolePicker();
+      showStartScreen();
       return;
     }
     currentClass = savedClass;
@@ -3779,7 +4109,7 @@ document.getElementById("name-input").addEventListener("keydown",e=>{if(e.key===
   } else {
     // No class yet — show role picker first
     render();
-    try { showRolePicker(); } catch(e) { setSyncStatus("error", "No connection"); }
+    try { showStartScreen(); } catch(e) { setSyncStatus("error", "No connection"); }
   }
 })();
 </script>
